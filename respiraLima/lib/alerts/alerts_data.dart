@@ -1,0 +1,127 @@
+class AllertsData {
+
+  static Map<String,dynamic> pollutionCategory  = { "pollution_categories_to_alert": ["Mala", "Cuidado"], };
+
+  static List<Map<String,dynamic>> placesAllert =  [
+        {
+            "lat": -12.040782,
+            "lon": -77.0405011,
+            "name": "Recuperación barrial Monserrate"
+        },
+        {
+            "lat": -12.0494309,
+            "lon": -77.0353154,
+            "name": "Jr. Camaná cuadras 6,7 y 8 y Jr. Ocoña cuadra 1"
+        },
+        {
+            "lat": -12.044616,
+            "lon": -77.014395,
+            "name": "Wawaparque, Jardín Rosa de Santa María - Barrios Altos"
+        },
+        {
+            "lat": -12.040647,
+            "lon": -77.039575,
+            "name": "Paseo del Canal de Monserrate"
+        },
+        {
+            "lat": -12.048879,
+            "lon": -77.043315,
+            "name": "Pasaje Teniente Paiva"
+        },
+        {
+            "lat": -12.05981,
+            "lon": -77.072356,
+            "name": "Urbanización Palomino"
+        },
+        {
+            "lat": -12.046681,
+            "lon": -77.01512,
+            "name": "Pasaje Ruiz y Jr. Coronel Zubiaga"
+        },
+        {
+            "lat": -12.0764165,
+            "lon": -77.0322691,
+            "name": "Circuito Infantil Araníbar"
+        },
+        {
+            "lat": -12.0563175,
+            "lon": -77.0182211,
+            "name": "Zona de Calma - Parque de la medicina"
+        },
+        {
+            "lat": -12.0441586,
+            "lon": -77.0126735,
+            "name": "Ruta a la Cuna Mercedarias"
+        },
+        {
+            "lat": -12.2388003,
+            "lon": -76.9409409,
+            "name": "Zona de calma - Lomo de Corvina"
+        },
+        {
+            "lat": -12.187063,
+            "lon": -76.9531734,
+            "name": "Cerro Papa"
+        },
+        {
+            "lat": -11.9699472,
+            "lon": -77.0701885,
+            "name": "Zona de Calma - Parque Villa Norte"
+        },
+        {
+            "lat": -12.2418518,
+            "lon": -76.9253036,
+            "name": "Parque los Jazminez"
+        },
+        {
+            "lat": -12.044236,
+            "lon": -77.012467,
+            "name": "qH048"
+        },
+        {
+            "lat": -12.050278,
+            "lon": -77.026111,
+            "name": "qH038"
+        },
+        {
+            "lat": -12.041178,
+            "lon": -77.043499,
+            "name": "qH039"
+        },
+        {
+            "lat": -12.0466667,
+            "lon": -77.080277778,
+            "name": "qH041"
+        },
+        {
+            "lat": -12.054953,
+            "lon": -77.029857,
+            "name": "qH047"
+        },
+        {
+            "lat": -12.060057,
+            "lon": -77.037774,
+            "name": "qH055"
+        },
+        {
+            "lat": -12.044226,
+            "lon": -77.050832,
+            "name": "qH040"
+        },
+        {
+            "lat": -12.04,
+            "lon": -77.015833,
+            "name": "qH042"
+        },
+        {
+            "lat": -12.041242,
+            "lon": -76.990528,
+            "name": "qH049"
+        },
+        {
+            "lat": -12.065546,
+            "lon": -77.046197,
+            "name": "qH054"
+        }
+    ];
+}

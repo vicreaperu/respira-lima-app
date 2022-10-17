@@ -1,0 +1,26 @@
+
+export 'package:app4/widgets/header_acompanhamiento.dart';
+export 'package:app4/widgets/to_follow_widget.dart';
+export 'package:app4/widgets/history_tracking_per_point_v2.dart';
+export 'package:app4/widgets/text_4_onboarding.dart';
+export 'package:app4/widgets/onboarding_backgroud.dart';
+export 'package:app4/widgets/btn_all_confirmations.dart';
+export 'package:app4/widgets/profile_and_mode_avatar.dart';
+export 'package:app4/widgets/history_tracking_per_point.dart';
+export 'package:app4/widgets/small_vertical_lines.dart';
+export 'package:app4/widgets/small_boll.dart';
+export 'package:app4/widgets/small_ball_with_hole.dart';
+export 'package:app4/widgets/auth_background.dart';
+export 'package:app4/widgets/auth_widgets.dart';
+export 'package:app4/widgets/bottom_modal_sheet.dart';
+export 'package:app4/widgets/branding_widgets.dart';
+export 'package:app4/widgets/btn_follow_user.dart';
+export 'package:app4/widgets/btn_location.dart';
+export 'package:app4/widgets/btn_navigation_mode.dart';
+export 'package:app4/widgets/btn_navigation_way.dart';
+export 'package:app4/widgets/btn_settings.dart';
+export 'package:app4/widgets/card_container.dart';
+export 'package:app4/widgets/manual_marker.dart';
+export 'package:app4/widgets/searchbar.dart';
+export 'package:app4/widgets/side_menu.dart';
+export 'package:app4/widgets/welcome_backgroud.dart';
