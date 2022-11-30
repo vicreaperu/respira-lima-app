@@ -10,7 +10,10 @@ part 'app_data_state.dart';
 class AppDataBloc extends Bloc<AppDataEvent, AppDataState> {
   final PredictionsGridService predictionsGridService;
   final AppDataService appDataService;
-  static int timePassedToUpdateGrid = 14;
+  static int forResidualOperatorMin = 15;
+  static int forResidualOperatorSec = 30;
+  static int timesTryingMin = 5;
+  static int timesTryingSec = 7;
   AppDataBloc({
       required this.predictionsGridService,
       required this.appDataService,
@@ -101,38 +104,24 @@ class AppDataBloc extends Bloc<AppDataEvent, AppDataState> {
     }
     return response; 
   }
-  Future<bool> checkAndUpdatePredictionsGrid() async {
-    bool returnVal = false;
-    await PrincipalDB.getPredictionsGridTimeUpdated().then((timeSaved) async {
+  Future<int> checkAndUpdatePredictionsGrid() async {
+    int returnVal = 400;
+    await PrincipalDB.getPredictionsGridDeadTime().then((timeSaved) async {
+      print('Gridx----> TIME WILL DEAD ***** $timeSaved  ****');
       if(timeSaved != null && timeSaved != ''){
-        print('DB pred LAST TIME SAVED is $timeSaved');
+        print('Gridx----> TIME WILL DEAD ***** $timeSaved  ****');
         final Duration duration = DateTime.now().difference(DateTime.parse(timeSaved));
-
-        print('DB pred TIME Passes ${duration.inMinutes}');
-        if (duration.inMinutes > timePassedToUpdateGrid){
-          await deleteAllPredictionGrid().then((isDeleted) async {
-            print('DB pred DELETED DATA?  $isDeleted');
-            if(isDeleted){
-            await getAllPredictionsGrid().then((isUpdated) {
-              print('DB pred --------1>>>> DELETED AND UPDATED OK');
+        
+        print('Gridx----> DURARION IN MINUTES !!!${duration.inMinutes}!!! IN seconds !!!${duration.inSeconds}! and simbol ${duration.isNegative}????');
+        print('Gridx----> DURARION IN MINUTES !!!${duration.inMinutes%forResidualOperatorMin}!!! !!!!!${duration.inSeconds%forResidualOperatorSec}!!?');
+        if (duration.inSeconds%forResidualOperatorSec < timesTryingSec && duration.inMinutes%forResidualOperatorMin < timesTryingMin && !duration.isNegative){
+        // if (duration.inMinutes < timePassedToUpdateGrid ){
+          await getAllPredictionsGrid().then((isUpdated) {
+              print('Gridx--- DB pred --------1>>>>>>>>>>>>>> DELETED AND UPDATED OK');
               returnVal =  isUpdated;
-
-            });
-            } else{
-              await countAllPredictionsGridValues().then((count) async{
-                print('DB pred CANT DATA IS  $count');
-                print('DB pred CANT DATA IS igual to 0? ${count==0}');
-                if(count == null || count == 0){
-                  await getAllPredictionsGrid().then((isUpdated) {
-                  print('DB pred --------2>>>> WAS EMPTY AND UPDATED OK');
-                  returnVal = isUpdated;
-                });
-                }
-              });
-            }
-          });
+        });
         } else{
-          returnVal = true;
+          returnVal = 200;
         }
       } else{
         await getAllPredictionsGrid().then((isUpdated) {
@@ -146,8 +135,8 @@ class AppDataBloc extends Bloc<AppDataEvent, AppDataState> {
     print('socket new map  DB pred --------X0X>>>> xxxx NOT Updated');
     return returnVal;
   }
-  Future<bool> updatePredictionsGrid() async {
-    bool returnVal = false;
+  Future<int> updatePredictionsGrid() async {
+    int returnVal = 400;
     await deleteAllPredictionGrid().then((isDeleted) async {
       print('socket new map  DB pred DELETED DATA?  $isDeleted');
       if(isDeleted){
@@ -173,12 +162,13 @@ class AppDataBloc extends Bloc<AppDataEvent, AppDataState> {
   }
 
   Future<bool> deleteAllPredictionGrid() async{
+    bool valToReturn = false;
     await PrincipalDB.deleteAllPredictionGrid().then((value){
       if(value != null){
-        return true;
+        valToReturn = true;
       }
     });
-    return false;
+    return valToReturn;
   }
 
 
@@ -220,29 +210,40 @@ class AppDataBloc extends Bloc<AppDataEvent, AppDataState> {
 
 
 
-  Future<bool> getAllPredictionsGrid() async{
-    bool response = false;
+  Future<int> getAllPredictionsGrid() async{
+    int response = 400;
     final String token = await PrincipalDB.getFirebaseToken();
-    final resp = await predictionsGridService.getAllPredictionsGrid(
+    final String? gridName = await PrincipalDB.getPredictionsGridName();
+      print('Gridx---> grid init name $gridName');
+    final resp = await predictionsGridService.getAllPredictionsGridV2(
       idToken: token,
-      // idToken: Preferences.firebaseToken,
+      gridName: gridName,
+
     );
-    print('socket new map Grid Pred. before saving');
+    // final resp = await predictionsGridService.getAllPredictionsGrid(
+    //   idToken: token,
+    // );
     if (resp['error'] == null){
       // int countID = 1;
-      resp.forEach((key, value) async {
+      await deleteAllPredictionGrid();
+      resp["data"].forEach((key, value) async {
         final GridModel gridMod = GridModel(gridId: key, pm10: value['PM10']??0, pm25: value['PM25']??0);
         await PrincipalDB.insertPredictionValueFromGrid( gridMod);
         // await PrincipalDB.insertPredictionValueFromGridWithCustomID( gridMod, countID);
         // countID += 1;
       });
+      await PrincipalDB.predictionsGridName(resp["name"] ?? '');
+      await PrincipalDB.predictionsGridDeadTime(resp["expiration_date"] ?? '');
       final DateTime timeNow = DateTime.now();
-      PrincipalDB.predictionsGridTimeUpdated(timeNow.toString());
-      print('socket new map Grid Pred. done ${resp.runtimeType}');
-      print('socket new map Grid Pred. donde $resp');
-      response =  true;
+      await PrincipalDB.predictionsGridTimeUpdated(timeNow.toString());
+      print('Gridx---> grid data ${resp["data"]}');
+      print('Gridx---> grid name ${resp["name"]}');
+      print('Gridx---> expiration date ${resp["expiration_date"]}');
+    
+      response =  200;
+    } else if(resp['error'] == 401) {
+      response = 401;
     }
     return response; 
   }
-
 }

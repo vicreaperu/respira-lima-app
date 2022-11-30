@@ -8,3 +8,4 @@ int radius_of_earth_in_kilometers = 6371;
 
 String latitude_offset = "0.0008993216059187305795924543335";
 String longitude_offset = "0.0009196863275267143111054713894";
+

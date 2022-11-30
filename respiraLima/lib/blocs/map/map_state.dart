@@ -5,18 +5,20 @@ class MapState extends Equatable {
   final bool isMapInitialized;
   final bool isFollowingUser;
   final bool isTheCameraTargetOnAre;
-  final CameraPosition lastCameraPosition;
+  final CameraPosition cameraPosition;
   final List<TrackingRoute> plannedRoutes;
   final Map<String, Polyline> polylines;
   final Map<String, Marker> markers;
   final String forSearchStreetName;
+  final bool updateData;
   // final List<Placemark> forSearchPlaceMark;
   final LatLng forSearchLatLng;
 
   const MapState({
     this.isTheCameraTargetOnAre = true,
+    this.updateData = true,
     this.isLoading = false,
-    CameraPosition? lastCameraPosition,
+    CameraPosition? cameraPosition,
     this.isMapInitialized = false,
      this.isFollowingUser = false,
      Map<String, Polyline>? polylines,
@@ -30,15 +32,16 @@ class MapState extends Equatable {
          forSearchLatLng = forSearchLatLng ?? const LatLng(0, 0),
          markers = markers ?? const {}, 
          plannedRoutes = plannedRoutes ?? const [],
-         lastCameraPosition = lastCameraPosition ?? const CameraPosition(target: LatLng(0, 0));
+         cameraPosition = cameraPosition ?? const CameraPosition(target: LatLng(0, 0));
 
   MapState copyWith(
     {
-     CameraPosition? lastCameraPosition,
+     CameraPosition? cameraPosition,
      bool? isLoading,
      bool? isTheCameraTargetOnAre,
      bool? isMapInitialized,
      bool? isFollowingUser,
+     bool? updateData,
      LatLng? forSearchLatLng,
      String? forSearchStreetName,
      List<Placemark>? forSearchPlaceMark,
@@ -48,11 +51,12 @@ class MapState extends Equatable {
      }) => MapState(
         isTheCameraTargetOnAre: isTheCameraTargetOnAre ?? this.isTheCameraTargetOnAre,
         // forSearchPlaceMark    : forSearchPlaceMark     ?? this.forSearchPlaceMark,
-        lastCameraPosition    : lastCameraPosition     ?? this.lastCameraPosition,
+        cameraPosition    : cameraPosition     ?? this.cameraPosition,
         forSearchStreetName   : forSearchStreetName    ?? this.forSearchStreetName,
         isMapInitialized      : isMapInitialized       ?? this.isMapInitialized,
         isFollowingUser       : isFollowingUser        ?? this.isFollowingUser,
         forSearchLatLng       : forSearchLatLng        ?? this.forSearchLatLng,
+        updateData            : updateData             ?? this.updateData,
         isLoading             : isLoading              ?? this.isLoading,
         polylines             : polylines              ?? this.polylines,
         markers               : markers                ?? this.markers,
@@ -61,12 +65,13 @@ class MapState extends Equatable {
   @override
   List<Object> get props => [
     isTheCameraTargetOnAre,
-    lastCameraPosition, 
+    cameraPosition, 
     isMapInitialized, 
     forSearchLatLng,
     forSearchStreetName,
     // forSearchPlaceMark,
     isFollowingUser,
+    updateData,
     polylines, 
     markers,
     isLoading,

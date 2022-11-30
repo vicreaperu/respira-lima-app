@@ -7,7 +7,7 @@ class HeaderAcompanhando extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 25,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

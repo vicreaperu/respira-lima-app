@@ -48,7 +48,7 @@ class _AccessButton extends StatelessWidget {
           shape: const StadiumBorder(),
           child: const Text('Generar acceso',
               style: TextStyle(color: Colors.white)),
-        )
+        ),
       ],
     );
   }

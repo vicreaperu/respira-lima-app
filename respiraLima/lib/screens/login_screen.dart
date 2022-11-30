@@ -59,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final Size areaScreen = MediaQuery.of(context).size;
+    final navigationBloc = BlocProvider.of<NavigationBloc>(context, listen: false);
     // final isKeyboard = MediaQuery.of(context).viewInsets.bottom != 0;
     
     // print('-----------LOGIN--------------');
@@ -70,7 +71,19 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Consumer<AuthFormProvider>(
         builder: (context, loginFomr, _) => Scaffold(
             appBar: AppBar(
-              automaticallyImplyLeading: false,
+              // automaticallyImplyLeading: true,
+              title:
+                     const BrandingLima(width: 250),
+              // SizedBox(
+              //   // width: double.infinity,
+              //   child: Row(
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: const <Widget>[
+              //     ],
+              //   ),
+              // ), 
+              actions: const [SizedBox(width: 55,)],
             ),
             body: FadeInLeft(
               child:
@@ -143,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               keyboardType:
                                                   TextInputType.emailAddress,
                                               style: const TextStyle(
-                                                  color: Colors.deepPurple),
+                                                  color: AppTheme.blue),
                                               decoration: InputDecotations
                                                   .authInputDecoration(
                                           
@@ -176,12 +189,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   TextInputType.visiblePassword,
                                               obscureText: _hidePass,
                                               style: const TextStyle(
-                                                  color: Colors.deepPurple),
+                                                  color: AppTheme.blue),
                                               decoration: InputDecoration(
                                                 // isDense: true, 
                                                 // contentPadding: EdgeInsets.fromLTRB(5, 5, 10, 0),
                                                 hintText: '••••••••',
-                                                labelText: 'Contrasenha',
+                                                labelText: 'Contraseña',
                                                 hintStyle: const TextStyle(color: Colors.black26),
                                                 labelStyle: const TextStyle(color: Colors.grey),
                                             
@@ -209,6 +222,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     : 'Extensión incorrecta';
                                               },
                                             ),
+
+                                            Text(loginFomr.isDataOk ? '' : 'Datos incorrectos', style: const TextStyle(color: AppTheme.red),),
                                             
                                             Container(
                                               // color: AppTheme.primaryOrange,
@@ -238,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
             
             
-                                            Container(
+                                            SizedBox(
                                               height: 35,
                                               // color: AppTheme.red,
                                               child: Row(
@@ -286,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                       overlayColor: MaterialStateProperty.all(
                                                           Colors.indigo.withOpacity(0.1))),
                                                   child: const Text(
-                                                    'Registrate',
+                                                    'Regístrate',
                                                     style:
                                                         TextStyle(fontSize: 15, color: AppTheme.blue, fontWeight: FontWeight.w900),
                                                     ),
@@ -368,6 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               loginFomr.userEmail, loginFomr.userPassword).then((token) async{
 
                             if(token != '') {
+                              loginFomr.isDataOk = true;
                               Preferences.isFirstTime = false;
                               await PrincipalDB.firebaseToken(token);
                               Preferences.userEmail = loginFomr.userEmail; //DELETE THIS
@@ -377,6 +393,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Preferences.isEmailVerified = emailVerified;
                                 if(!emailVerified) await authService.verifyEmail(token);
                               }
+                              
+                              await navigationBloc.getNavigationPreferences().then((value){
+                                print('preferences----> getNavigationPreferences $value');
+                              });
+                              await navigationBloc.getFavoriteDestinations().then((value){
+                                print('preferences----> getFavoriteDestinations $value');
+                              });
                               await authService.lookUpUser(token).then((dataLook) {
                                 if(dataLook.isEmpty == false){
                                   Preferences.userBirthday = dataLook['birthdate'] ;
@@ -387,6 +410,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
                                   print('.....NOT A GUEST 3');
                                   authBloc.add(HasAccountEvent());
+                                  
                                   Navigator.pushReplacementNamed(context, LoadingScreen.pageRoute);
                               });
                               
@@ -395,6 +419,9 @@ class _LoginScreenState extends State<LoginScreen> {
               
                             // Navigator.pushReplacementNamed(context, SettingsScreen.pageRoute);
                             
+                            } else {
+                              loginFomr.isLoading = false;
+                              loginFomr.isDataOk = false;
                             }
                             // await Future.delayed(Duration(seconds: 3));
                               }); 

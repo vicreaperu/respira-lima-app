@@ -17,6 +17,18 @@ class OnNavLoadingEvent extends NavigationEvent {}
 class OffNavLoadingEvent extends NavigationEvent {}
 
 
+class OffChangedEvent extends NavigationEvent {}
+
+
+
+class UpdateDataPercentEvent extends NavigationEvent {
+  final double percent;
+
+  const UpdateDataPercentEvent({this.percent = 1}); // Defaul is 100%, same as restarting
+}
+
+
+
 class SelectNavigationModeEvent extends NavigationEvent {}
 class DeactivateNavigationModeEvent extends NavigationEvent {}
 
@@ -24,11 +36,20 @@ class DeactivateNavigationModeEvent extends NavigationEvent {}
 class WalkingNavigationProfileEvent extends NavigationEvent {}
 class CyclingNavigationProfileEvent extends NavigationEvent {}
 
+
+class TimeNavigationAirQualityPreferencesEvent extends NavigationEvent {}
+class PollutantNavigationAirQualityPreferencesEvent extends NavigationEvent {}
+
 class StartNavigationEvent extends NavigationEvent {}
 class LiteStartNavigationEvent extends NavigationEvent {}
+// class BackgroundStartNavigationEvent extends NavigationEvent {}
 class StopNavigationEvent extends NavigationEvent {
 
 }
+class OnlyStopNavigationEvent extends NavigationEvent {}
+
+class OnSpeakRouteEvent extends NavigationEvent {}
+class OffSpeakRouteEvent extends NavigationEvent {}
 class EndNavigationEvent extends NavigationEvent {
   final double rating;
   const EndNavigationEvent(this.rating);
@@ -72,6 +93,16 @@ class PlaceVotesEvent extends NavigationEvent {
   final int votes;
   final bool liked;
   const PlaceVotesEvent(this.score, this.votes, this.liked);
+}
+
+class AddNavigationInstructions extends NavigationEvent{
+  final List<InstructionsModel> instructions;
+  const AddNavigationInstructions(this.instructions);
+}
+class UpdateAndReadNavigationInstructions extends NavigationEvent{
+  final List<InstructionsModel> instructions;
+  final String? textInstruction;
+  const UpdateAndReadNavigationInstructions({required this.instructions, this.textInstruction});
 }
 
 
@@ -126,10 +157,29 @@ class ReturnToNavigationTrackingRuteo extends NavigationEvent{
 }
 
 
+class OnFavoritiesSpecialEvent extends NavigationEvent {}
+class OffFavoritiesSpecialEvent extends NavigationEvent {}
+
+
+class OnSelectingFavoriteRoute extends NavigationEvent{
+  final LatLng destination;
+
+  const OnSelectingFavoriteRoute(this.destination);
+}
+class OffSelectingFavoriteRoute extends NavigationEvent{}
+
+
+
 class OnSelectingRoute extends NavigationEvent{
   final LatLng destination;
 
   const OnSelectingRoute(this.destination);
 }
 class OffSelectingRoute extends NavigationEvent{}
+
+
+class AddUpdateFavoritePlacesDataEvent extends NavigationEvent {
+  final List<FavoritePlacesModel> favoritePlacesData;
+  const AddUpdateFavoritePlacesDataEvent(this.favoritePlacesData);
+}
 

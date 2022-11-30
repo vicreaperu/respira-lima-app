@@ -1,3 +1,10 @@
+export 'package:app4/screens/login_screen.dart';
+
+export 'package:app4/screens/navigation_preferences_screen.dart';
+export 'package:app4/screens/map_screen_iOS.dart';
+export 'package:app4/screens/map_screen_android.dart';
+export 'package:app4/screens/background_screen2.dart';
+export 'package:app4/screens/background_screen.dart';
 export 'package:app4/screens/help_screen.dart';
 export 'package:app4/screens/politics_screen.dart';
 export 'package:app4/screens/favorites_screen.dart';
@@ -16,4 +23,3 @@ export 'package:app4/screens/register_screen.dart';
 export 'package:app4/screens/restore_password_screen.dart';
 export 'package:app4/screens/settings_screen.dart';
 export 'package:app4/screens/splash.dart';
-

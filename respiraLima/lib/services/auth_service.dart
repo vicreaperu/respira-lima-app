@@ -6,6 +6,7 @@ import 'package:app4/global/enviroment.dart';
 import 'package:app4/share_preferences/preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 class AuthService extends ChangeNotifier {
   late final UserCredential credentials;
@@ -23,37 +24,45 @@ class AuthService extends ChangeNotifier {
   Future<bool> askForTokenUpdating() async {
     bool response = false;
     try {
-      print('to init BEFORE FIRABASE INSTANCE');
+      print('AUTHX----> to init BEFORE FIRABASE INSTANCE');
       final String? token = await auth.currentUser?.getIdToken();
       // To change it after initialization, use `setPersistence()`:
-      print('to init TOKENQQ 1 xx IS ${token ?? 'NO TOK'}');
-      if(token != null){
-        print('to init TOKENQQ 1 yy IS $token'); 
+      print('AUTHX----> to init ACTUAL TOKEN ${token ?? 'NO TOK'}');
+      if(token != null){ 
         final String? lastTimeTokenUpdated = await PrincipalDB.getTimeFirebaseTokenUpdated();
         if (lastTimeTokenUpdated != null && lastTimeTokenUpdated != ''){
           final Duration duration = DateTime.now().difference(DateTime.parse(lastTimeTokenUpdated));
           final String previousToken =  await PrincipalDB.getFirebaseToken(); 
-          print('to init TOKENQQ 1 zz IS $previousToken'); 
-          if(duration.inMinutes > 59){
+          print('AUTHX----> to init PREVIOUS TOKEN IS 1 zz IS $previousToken'); 
+          print('AUTHX----> to init  TIME PASED ${duration.inMinutes}'); 
+          // if(duration.inMinutes > 59){
             if(token != previousToken){
+              print('AUTHX----> to UPDATING TOKENNNNNNNN----***************'); 
               await PrincipalDB.firebaseToken(token);
               // PrincipalDB.firebaseToken = token;
               Preferences.isFirstTime = false;
               // Preferences.timeFirebaseTokenUpdated = DateTime.now().toString();
               response = true;
-            } 
-            else{
-              print('xxxxxx AUTHHHH ERRORRR.... RETURNING THE SAME TOKEN');
+            } else if(duration.inMinutes > 59){
+              print('AUTHX----> to NOTTT UPDATED, TIME PASES IS ${duration.inMinutes}----***************'); 
+              response = false;
+
+            } else{
+              print('AUTHX----> to SAME TOKEN AS BEFORE AND TIME PASES IS ${duration.inMinutes}----***************'); 
+
+              Preferences.isFirstTime = false;
+              response = true;
             }
-          } else{
-            Preferences.isFirstTime = false;
-            response = true;
-          }
-        } 
-        
-        
-      }
-    } catch (e) {
+        } else{
+          print('AUTHX----> to UPDATING  NEWWWW TOKENNNNNNNN----***************'); 
+          await PrincipalDB.firebaseToken(token);
+          // PrincipalDB.firebaseToken = token;
+          Preferences.isFirstTime = false;
+          // Preferences.timeFirebaseTokenUpdated = DateTime.now().toString();
+          response = true;
+      }     
+      } 
+    }  catch (e) {
       print('to init TOKENQQ ERROR IS $e');
       response = false;
     }
@@ -309,7 +318,7 @@ class AuthService extends ChangeNotifier {
     try {
       final resp = await http.put(url, headers: head, body: json.encode(authData));
       final Map<String, dynamic> decodeResp = json.decode(resp.body);
-      print(decodeResp);
+      print('decoded----> $decodeResp');
       if (decodeResp['status'] == 200) {
         return true;
       } else {
@@ -346,19 +355,17 @@ class AuthService extends ChangeNotifier {
   Future<String?> resetPassword(String email) async {
     final Map<String, dynamic> authData = {'email': email};
     final Map<String, String> head = {HttpHeaders.contentTypeHeader: 'application/json'}; 
-
     final url = Uri.https(Environment.baseUrlAuth, '${Environment.unEncodedPathAuth}/user/reset-password');
     try{
 
       final resp = await http.put(url,headers: head, body: json.encode(authData));
-      print('resetPassword-------');
-      print(resp);
-      print(resp.body);
+      print("4pass------>>$resp");
+      print("4pass------>>${resp.body}");
+      return 'Si la cuenta es válida, te enviaremos un link al correo registrado.';
     }on Exception catch (e) {
-      print(e);
+      print("4pass-----> error$e");
+      return null;
     }
-
-    return null;
   }
   Future<bool> changePassword(String idToken, String password) async {
     final Map<String, String> head = {
@@ -382,6 +389,7 @@ class AuthService extends ChangeNotifier {
     }
     return false;
   }
+
 
 
 }

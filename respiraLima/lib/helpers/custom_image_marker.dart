@@ -9,8 +9,20 @@ Future<BitmapDescriptor> getAssetImageMarker()async{
 
   // );
   return BitmapDescriptor.fromAssetImage(
-    const ImageConfiguration(size: Size(10, 10)), 
+    const ImageConfiguration(size: Size(5, 5)), 
     // 'assets/icons/qAIRita-01.png');
-    'assets/icons/custom-pin.png');
+    // 'assets/icons/custom-pin.png');
+    // 'assets/icons/marcador-de-ubicacion.png');
+    'assets/icons/focus2.png');
+}
+Future<BitmapDescriptor> getFinishAssetImageMarker()async{
+  // final imageCodec = ui.instantiateImageCodec(
+
+  // );
+  return BitmapDescriptor.fromAssetImage(
+    const ImageConfiguration(size: Size(5, 5)), 
+    // 'assets/icons/qAIRita-01.png');
+    // 'assets/icons/terminar.png');
+    'assets/icons/pin3.png');
 }
 

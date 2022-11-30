@@ -8,11 +8,13 @@ class Preferences {
   static String _userPassword       = '';
   static String _userEmail          = '';
   static String _userPhoneNumber    = '';
-  static int    _userCiclistPeaton  = 1;
-  static int    _userAirQualityPref = 50;
+  static int    _userCiclistPeaton  = 0; // Peaton = 1, ciclista = 2 
+  static int    _userAirQualityPref = 0; // Baja contaminacion = 1, menor distancias = 2
   static bool   _isDark             = false;
   static bool   _isEmailVerified    = false;
   static bool   _isAguest           = true;
+  static bool   _speakRoute         = true;
+  static bool   _oldAndroid         = false;
 
   // //// TODO: DELETE
   // static String _firebaseToken = '';
@@ -50,21 +52,32 @@ class Preferences {
   //   navigationLastKnownInformation  = '';
   // }
 
-  static void cleanPreferences() {
+  static cleanLitePreferences() async {
     userName = '';
     userBirthday = '';
     userGender = 0;
     userPassword = '';
     userEmail = '';
     userPhoneNumber = '';
-    userCiclistPeaton = 1;
-    userAirQualityPref = 50;
+    isEmailVerified = false;
+    isFirstTime = true;
+    await setIsAguest(true);
+  }
+  static cleanTotalPreferences() async{
+    userName = '';
+    userBirthday = '';
+    userGender = 0;
+    userPassword = '';
+    userEmail = '';
+    userPhoneNumber = '';
+    await setUserCiclistPeaton(0);
+    await setUserAirQualityPref(0);
     // isDark = false;
     isEmailVerified = false;
-    isAguest = true;
     // firebaseToken = '';
     // timeFirebaseTokenUpdated = '';
     isFirstTime = true; // TODO: analize this condition
+    await setIsAguest(true);
     // areTermsAccepted = false;
     // willRemenberData = false;
   }
@@ -134,12 +147,36 @@ class Preferences {
   // }
 
 
+  static bool get oldAndroid {
+    return _prefer.getBool('oldAndroid') ?? _oldAndroid;
+  }
+
+  static setoldAndroid(bool value) async{
+    await _prefer.setBool('oldAndroid', value);
+    _oldAndroid = value;
+  }
+
+
+
+
+  static bool get speakRoute {
+    return _prefer.getBool('speakRoute') ?? _speakRoute;
+  }
+
+  static set speakRoute(bool value) {
+    _prefer.setBool('speakRoute', value);
+    _speakRoute = value;
+  }
   static bool get isAguest {
     return _prefer.getBool('isAguest') ?? _isAguest;
   }
 
   static set isAguest(bool value) {
     _prefer.setBool('isAguest', value);
+    _isAguest = value;
+  }
+  static setIsAguest(bool value) async{
+    await _prefer.setBool('isAguest', value);
     _isAguest = value;
   }
 
@@ -244,8 +281,8 @@ class Preferences {
     return _prefer.getInt('userAirQualityPref') ?? _userAirQualityPref;
   }
 
-  static set userAirQualityPref(int value) {
-    _prefer.setInt('userAirQualityPref', value);
+  static setUserAirQualityPref(int value) async {
+    await _prefer.setInt('userAirQualityPref', value);
     _userAirQualityPref = value;
   }
 
@@ -253,10 +290,15 @@ class Preferences {
     return _prefer.getInt('userCiclistPeaton') ?? _userCiclistPeaton;
   }
 
-  static set userCiclistPeaton(int value) {
-    _prefer.setInt('userCiclistPeaton', value);
+  static setUserCiclistPeaton(int value) async{
+    await _prefer.setInt('userCiclistPeaton', value);
     _userCiclistPeaton = value;
   }
+
+
+
+
+
 
   static String get userEmail {
     return _prefer.getString('userEmail') ?? _userEmail;

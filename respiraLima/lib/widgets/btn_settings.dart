@@ -18,18 +18,22 @@ class BtnSettings extends StatelessWidget {
       Container() : 
       SafeArea(
       child:  ElasticInLeft(
-        child: CircleAvatar(
-          maxRadius: 25,
-          backgroundColor: Colors.white,
-          child: IconButton(
-            icon: const Icon(
-              Icons.list,
-              size: 30,
-              color: Colors.black,
-              ),
-            onPressed: () {
-              _globalKey.currentState?.openDrawer();
-            }, ),
+        child: Container(
+          padding: const EdgeInsets.only(top: 25, left: 2),
+          alignment: Alignment.topLeft,
+          child: CircleAvatar(
+            maxRadius: 30,
+            backgroundColor: Colors.white,
+            child: IconButton(
+              icon: const Icon(
+                Icons.list,
+                size: 35,
+                color: Colors.black,
+                ),
+              onPressed: () {
+                _globalKey.currentState?.openDrawer();
+              }, ),
+          ),
         ),
       ),
     );

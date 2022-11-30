@@ -1,5 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
-
 class StartNavigationModel{
   final String profile;
   final String mode;

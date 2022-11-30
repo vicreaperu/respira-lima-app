@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 class SearchDestinationDelegate extends SearchDelegate<SearchResult> {
+  final bool isFavorite;
   String searchText = '';
   // SearchDestinationDelegate() : super(searchFieldLabel: 'Buscar y "Enter"');
-  SearchDestinationDelegate() : super(searchFieldLabel: 'Buscar y confirmar destino');
+  SearchDestinationDelegate({this.isFavorite = false}) : super(searchFieldLabel: 'Buscar y confirmar destino');
   @override
   List<Widget>? buildActions(BuildContext context) {
     // TODO: implement buildActions
@@ -25,12 +26,17 @@ class SearchDestinationDelegate extends SearchDelegate<SearchResult> {
   @override
   Widget? buildLeading(BuildContext context) {
     // TODO: implement buildLeading
+    final navigationBloc = BlocProvider.of<NavigationBloc>(context);
     return IconButton(
         onPressed: () {
           final result = SearchResult(cancel: true);
+          if(navigationBloc.state.isFavoriteRouteSelected){
+            print('Favorite----> CANCEL ARROW');
+            navigationBloc.add(OffFavoritiesSpecialEvent());
+          }
           close(context, result);
         },
-        icon: Icon(Icons.arrow_back));
+        icon: const Icon(Icons.arrow_back));
         
   }
 
@@ -55,7 +61,8 @@ class SearchDestinationDelegate extends SearchDelegate<SearchResult> {
               subtitle: Text(isOnArea == 1 ? place.placeName : 'Fuera de área'),
               leading:  CircleAvatar(backgroundColor: isOnArea == 1 ? AppTheme.gray30 : AppTheme.red,child: Icon(Icons.place_sharp, color: isOnArea == 1 ? AppTheme.gray60 : AppTheme.white,),),
               onTap: () async {
-                final result = SearchResult(streetName: place.placeName, cancel: false, manual: false, coordinates: LatLng(place.geometry.coordinates[1], place.geometry.coordinates[0]));
+                final result = SearchResult(streetName: place.placeName, cancel: false, manual: true, coordinates: LatLng(place.geometry.coordinates[1], place.geometry.coordinates[0]));
+                // final result = SearchResult(streetName: place.placeName, cancel: false, manual: false, coordinates: LatLng(place.geometry.coordinates[1], place.geometry.coordinates[0]));
                 
                 // await mapBloc.updateForSearchData2(coordinates: result.coordinates!, streetName: result.streetName!);
                 // navigationBloc.add(OnSelectingRoute(result.coordinates!));  
@@ -79,22 +86,57 @@ class SearchDestinationDelegate extends SearchDelegate<SearchResult> {
   Widget buildSuggestions(BuildContext context) {
     // TODO: implement buildSuggestions
     print('the place query: ${query}');
-    return ListView(children: [
-      ListTile(
+    final navigationBloc = BlocProvider.of<NavigationBloc>(context);
+    print('Preferences----->>> ${navigationBloc.state.navigationState}');
+    return ListView(children: isFavorite ? [
+      manualOption(context),
+
+    ] : [
+      manualOption(context),
+      // (navigationBloc.state.navigationState < 5) ? 
+
+      // const SizedBox() :
+      // const SizedBox() ,
+      for(int i = navigationBloc.state.favoritePlacesData.length - 1; i >= 0; i--)
+        ListTile(
         leading: const Icon(
           Icons.location_on_outlined,
           color: AppTheme.black,
         ),
-        title: const Text(
-          'Colocar la ubicacion manualmente',
+        title: Text(
+          navigationBloc.state.favoritePlacesData[i].tag,
+        ),
+        subtitle: Text(
+          navigationBloc.state.favoritePlacesData[i].streetName,
         ),
         onTap: () {
-          final result = SearchResult(cancel: false, manual: true);
+          // final result = SearchResult(cancel: false, manual: true);
+          final result = SearchResult(streetName: navigationBloc.state.favoritePlacesData[i].streetName, cancel: false, manual: true, coordinates: 
+            LatLng(navigationBloc.state.favoritePlacesData[i].lat, navigationBloc.state.favoritePlacesData[i].lng));
           close(context, result);
           //TODO: RETURN SOMETHING
         },
-      ),
+      ) ,
+
+      
     ]);
+  }
+
+  ListTile manualOption(BuildContext context) {
+    return ListTile(
+      leading: const Icon(
+        Icons.location_searching,
+        color: AppTheme.black,
+      ),
+      title: const Text(
+        'Colocar la ubicacion manualmente',
+      ),
+      onTap: () {
+        final result = SearchResult(cancel: false, manual: true);
+        close(context, result);
+        //TODO: RETURN SOMETHING
+      },
+    );
   }
 }
 

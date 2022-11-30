@@ -34,7 +34,7 @@ abstract class AlertsAbstractClass {
 }
 
 class PlaceAlerts extends AlertsAbstractClass {
-  double max_distance = 0.1; // in km
+  double max_distance = 0.15; // in km
 
   //TODO DB: SE DEBE GUARDAR EN LA DB
   void set places(List<dynamic> places) {

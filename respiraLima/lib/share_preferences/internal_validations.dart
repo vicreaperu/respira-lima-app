@@ -18,7 +18,7 @@ class InternalValidations {
   }
 
   static bool nameValidator(value) {
-    String pattern = r"^[\p{L} ,.'-]+$";
+    String pattern = r"^[\p{L} ,.'-]{3,40}$";
     RegExp regExp = RegExp(pattern, caseSensitive: false, unicode: true, dotAll: true);
     return regExp.hasMatch(value ?? '');
   }

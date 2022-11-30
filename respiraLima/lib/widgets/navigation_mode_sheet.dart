@@ -1,5 +1,4 @@
 import 'package:app4/blocs/blocs.dart';
-import 'package:app4/db/principal_db.dart';
 import 'package:app4/themes/themes.dart';
 import 'package:app4/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -14,13 +13,12 @@ class NavigationModeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navigationBloc = BlocProvider.of<NavigationBloc>(context);
-    final appDataBloc = BlocProvider.of<AppDataBloc>(context);
     final mapBloc = BlocProvider.of<MapBloc>(context);
     return BlocBuilder<NavigationBloc, NavigationState>(
       builder: (context, state) {
         // return state.navigationState != 0 && state.isOnArea? 
-        return state.navigationState != 0 ? 
-        Container() 
+        return state.navigationState != 0? 
+        const SizedBox() 
         : 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -63,48 +61,16 @@ class NavigationModeSheet extends StatelessWidget {
                       title: 'Tengo un destino',
                       btnColor: state.navLoading ? AppTheme.gray50 : AppTheme.primaryAqua ,
                       subTitle: 'Coloca un punto de llegada y te recomendaremos la ruta con mejor calidad del aire.',
-                      callback: state.navLoading ? (){} : () 
-                      // async {
-                      //   print('DB pred -------START -------');
-                      //   final places = await PrincipalDB.getPlacesAlerts();
-                      //   final pollution = await PrincipalDB.getPollutionCategory();
-                      //   print('DB PLACES $places');
-                      //   print('DB PLACES $pollution');
-                      //   // await appDataBloc.checkAndUpdateAlertsData().then((value) => 
-                      //   //   print('DB PRED IS UPDATED ?????? $value')
-                      //   // );
-                      //   // await positionReportBloc.findPredictionFromGridByGridId('(109, 9)');
-                      //   // await positionReportBloc.findPredictionFromGridByGridId('(34, 62)');
-                      //   // await positionReportBloc.countAllPredictionsGridValues();
-                      //   // await positionReportBloc.readPredictionsGridFromDB();
-                      //   print('DB pred -------END -------');
-                      //   // positionReportBloc.add(UpdatePredictionGridEvent());
-                      // }
-
-
-
-                      // {
-                      //   final predictionsGridService = Provider.of<PredictionsGridService>(context, listen: false);
-                      //   await predictionsGridService.getAllPredictionsGrid(idToken: Preferences.firebaseToken).then((value) {
-                      //     print('Grid Pred. is $value');
+                      callback: state.navLoading ? null : () 
+                      // async{
+                      //   await navigationBloc.getNavigationPreferences().then((value){
+                      //     print('preferences----> getNavigationPreferences $value');
+                      //   });
+                      //   await navigationBloc.getFavoriteDestinations().then((value){
+                      //     print('preferences----> getFavoriteDestinations $value');
                       //   });
                       // }
-
-
-                      // {
-                      //   print('New position Event for position report bloc');
-                      //   positionReportBloc.add(AddNewPositionReport(
-                      //     PositionReport(
-                      //       airQuality: 'bueno', 
-                      //       distance: 10, 
-                      //       exposure: 12.1, 
-                      //       streetName: 'WallStreet', timestamp: '11:21:11 11/11/11'
-                      //       )
-                      //   ));
-                      // }
-
-
-
+                  
                       {
                         final int locationState = mapBloc.isOnAreaFastQuestion();
                         if(locationState == 1) {
@@ -140,7 +106,7 @@ class NavigationModeSheet extends StatelessWidget {
                       title: 'Saldré sin un destino fijo',
                       btnColor: state.navLoading ? AppTheme.gray50 : AppTheme.primaryAqua ,
                       subTitle: 'No es necesario que definas un punto de llegada, solo define tu perfil y monitorea la calidad del aire del camino.',
-                      callback: state.navLoading ? () {} : ()  {
+                      callback: state.navLoading ? null : ()  {
 
 
                         final int locationState = mapBloc.isOnAreaFastQuestion();
@@ -186,7 +152,7 @@ class CardModeSelector extends StatelessWidget {
   final String title;
   final String subTitle;
   final String picName;
-  final VoidCallback callback;
+  final VoidCallback? callback;
   final Color btnColor;
 
   @override

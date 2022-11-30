@@ -13,7 +13,9 @@ class NavigationState extends Equatable {
   final bool locationScored;
   final double locationStars;
   final int totalStars;
+  final double dataPercent;
   final bool navLoading;
+  final bool speakRoute;
   final List<LatLng> startAndFinalDestination;
   final bool pollutionAlert;
   final bool outOffAreaAlert;
@@ -23,9 +25,14 @@ class NavigationState extends Equatable {
   final bool isOnArea;
   final List<PositionReport> navigationDataToShowTracking;
   final List<HistoryModel> historyData;
+  final List<FavoritePlacesModel> favoritePlacesData;
+  final List<InstructionsModel> navigationInstruction;
   final bool loading;
+  final bool changed;
   final bool isRouteSelected;
+  final bool isFavoriteRouteSelected;
   final Map<String,dynamic> navigationDataToShowEnding;
+  final String navigationAirQualityPref; // time and pollutant
   final String navigationMode; // monitoreo and ruteo
   final String navigationProfile; // walking and cycling
   final bool isNavigating; // true only when the navigation state is 2
@@ -39,13 +46,17 @@ class NavigationState extends Equatable {
       List<PositionReport>? navigationDataToShowTracking,
       List<PlaceAlertModel>? placeAlerData,
       List<HistoryModel>? historyData,
+      List<FavoritePlacesModel>? favoritePlacesData,
       List<LatLng>? startAndFinalDestination,
+      List<InstructionsModel>? navigationInstruction,
       this.navigationMode = 'monitoreo', 
       this.navigationProfile = 'walking', 
+      this.navigationAirQualityPref = 'pollutant',
       this.navigationState = 0,
       this.isNavigating = false,
       this.locationStars = 0,
       this.totalStars = 0,
+      this.dataPercent = 1,  // Percent value between 0.0 and 1.0
       this.locationScored = false,
       this.locationLiked = false,
       this.pollutionAlert = false,
@@ -53,35 +64,47 @@ class NavigationState extends Equatable {
       this.placesAlert = false,
       this.isOnArea = true,
       this.navLoading= false,
+      this.speakRoute = true,
       this.alertScreenON= false,
       this.loading= false,
+      this.changed= false,
       this.isRouteSelected= false,
       this.placeAlertShowDetails= false,
+      this.isFavoriteRouteSelected= false,
 
       }):navigationDataToShowEnding = navigationDataToShowEnding ?? const {}, 
         navigationDataToShowTracking = navigationDataToShowTracking ?? const [],
         placeAlerData = placeAlerData ?? const [],
         startAndFinalDestination = startAndFinalDestination ?? const [],
-        historyData = historyData ?? const [];
+        navigationInstruction = navigationInstruction ?? const [],
+        historyData = historyData ?? const [],
+        favoritePlacesData = favoritePlacesData ?? const [];
   NavigationState copyWith({
     List<PositionReport>? navigationDataToShowTracking,
     Map<String,dynamic>? navigationDataToShowEnding,
     List<PlaceAlertModel>? placeAlerData,
     List<HistoryModel>? historyData,
+    List<FavoritePlacesModel>? favoritePlacesData,
     List<LatLng>? startAndFinalDestination,
+    List<InstructionsModel>? navigationInstruction,
+    String? navigationAirQualityPref,
     String? navigationProfile,
     String? navigationMode,
+    bool? isFavoriteRouteSelected,
     bool? placeAlertShowDetails,
     bool? alertScreenON,
+    bool? speakRoute,
     bool? locationScored,
     bool? locationLiked,
     double? locationStars,
+    double? dataPercent,
     int? totalStars,
     bool? isRouteSelected,
     bool? outOffAreaAlert,
     int? navigationState,
     bool? pollutionAlert,
     bool? loading,
+    bool? changed,
     bool? isNavigating,
     bool? placesAlert,
     bool? navLoading,
@@ -91,7 +114,11 @@ class NavigationState extends Equatable {
     navigationDataToShowTracking: navigationDataToShowTracking  ?? this.navigationDataToShowTracking,
     navigationDataToShowEnding  : navigationDataToShowEnding    ?? this.navigationDataToShowEnding,
     startAndFinalDestination    : startAndFinalDestination      ?? this.startAndFinalDestination,
+    isFavoriteRouteSelected     : isFavoriteRouteSelected       ?? this.isFavoriteRouteSelected,
+    navigationAirQualityPref       : navigationAirQualityPref         ?? this.navigationAirQualityPref,
     placeAlertShowDetails       : placeAlertShowDetails         ?? this.placeAlertShowDetails,
+    navigationInstruction       : navigationInstruction         ?? this.navigationInstruction,
+    favoritePlacesData          : favoritePlacesData            ?? this.favoritePlacesData,
     navigationProfile           : navigationProfile             ?? this.navigationProfile,
     navigationState             : navigationState               ?? this.navigationState,
     isRouteSelected             : isRouteSelected               ?? this.isRouteSelected,
@@ -104,12 +131,15 @@ class NavigationState extends Equatable {
     locationStars               : locationStars                 ?? this.locationStars,
     placeAlerData               : placeAlerData                 ?? this.placeAlerData,
     isNavigating                : isNavigating                  ?? this.isNavigating,   
-    totalStars                  : totalStars                    ?? this.totalStars,   
+    dataPercent                 : dataPercent                   ?? this.dataPercent,   
     historyData                 : historyData                   ?? this.historyData,
     placesAlert                 : placesAlert                   ?? this.placesAlert, 
+    totalStars                  : totalStars                    ?? this.totalStars,   
+    speakRoute                  : speakRoute                    ?? this.speakRoute,   
     navLoading                  : navLoading                    ?? this.navLoading,   
     isOnArea                    : isOnArea                      ?? this.isOnArea, 
     loading                     : loading                       ?? this.loading, 
+    changed                     : changed                       ?? this.changed, 
   );
   
   @override
@@ -118,7 +148,11 @@ class NavigationState extends Equatable {
     navigationDataToShowEnding,
     navigationDataToShowTracking,
     startAndFinalDestination,
+    isFavoriteRouteSelected,
+    navigationInstruction,
     placeAlertShowDetails,
+    navigationAirQualityPref,
+    favoritePlacesData,
     navigationProfile,
     isRouteSelected,
     navigationState,
@@ -132,10 +166,13 @@ class NavigationState extends Equatable {
     isNavigating,
     historyData,
     placesAlert,
+    dataPercent,
+    speakRoute,
     navLoading,
     totalStars,
     isOnArea,
     loading,
+    changed,
   ];
 }
 

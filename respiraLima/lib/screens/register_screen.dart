@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:animate_do/animate_do.dart';
+import 'package:app4/blocs/blocs.dart';
 import 'package:app4/db/principal_db.dart';
 import 'package:app4/providers/providers.dart';
-import 'package:app4/screens/login_screen.dart';
 import 'package:app4/screens/politics_screen.dart';
+import 'package:app4/screens/splash.dart';
 import 'package:app4/screens_alerts/screens_alerts.dart';
 import 'package:app4/services/auth_service.dart';
 import 'package:app4/themes/themes.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:app4/share_preferences/share_preferences.dart';
 import 'package:app4/ui/input_decorations.dart';
 import 'package:app4/widgets/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
@@ -60,6 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final Size areaScreen = MediaQuery.of(context).size;
+    final userAppDataBloc = BlocProvider.of<UserAppDataBloc>(context, listen: false);
     print('---------REGISTER----------------');
     print(areaScreen.height);
     print(areaScreen.width);
@@ -71,10 +74,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: registerForm.isLoading ? false : true,
+              centerTitle: true,
+              title:
+                  const BrandingLima(width: 250),
+              
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: Row(
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: const <Widget>[
+              //        BrandingLima(width: 250),
+              //     ],
+              //   ),
+              // ), 
+              actions: const [SizedBox(width: 55,)],
               leading: registerForm.isLoading ? Container() : IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, LoginScreen.pageRoute);
+                  // Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, SplashScreen.pageRoute);
+                  // Navigator.pushReplacementNamed(context, LoginScreen.pageRoute);
                 },
                  ),
             ),
@@ -145,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               autocorrect: false,
                                               keyboardType: TextInputType.name,
                                               style: const TextStyle(
-                                                  color: AppTheme.black),
+                                                  color: AppTheme.blue),
                                               decoration: InputDecotations
                                                   .authInputDecoration(
                                                 labelText: 'Nombre Completo',
@@ -172,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               keyboardType:
                                                   TextInputType.emailAddress,
                                               style: const TextStyle(
-                                                  color: Colors.deepPurple),
+                                                  color: AppTheme.blue),
                                               decoration: InputDecotations
                                                   .authInputDecoration(
                                                 labelText: 'Correo electrónico',
@@ -230,12 +250,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   TextInputType.visiblePassword,
                                               obscureText: _hidePass,
                                               style: const TextStyle(
-                                                  color: Colors.deepPurple),
+                                                  color: AppTheme.blue),
                                               decoration: InputDecoration(
                                                 // isDense: true, 
                                                 // contentPadding: EdgeInsets.fromLTRB(5, 5, 10, 0),
                                                 hintText: '••••••••',
-                                                labelText: 'Contrasenha',
+                                                labelText: 'Contraseña',
                                                 hintStyle: const TextStyle(color: Colors.black26),
                                                 labelStyle: const TextStyle(color: Colors.grey),
                                             
@@ -291,6 +311,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   onPressed: registerForm.isLoading
                                                       ? null
                                                       : () {
+                                                        print('appData---> .   ${userAppDataBloc.state.arePoliticsData}');
+                                                        if(!userAppDataBloc.state.arePoliticsData){
+                                                          userAppDataBloc.getPoliticsAndQuestions().then((hasData) {
+                                                            if(hasData){
+                                                              print('appData---> HAS DATA UUUUUUU $hasData');
+                                                            }else {
+                                                              print('appData---> HAS DATA UUUUUUU $hasData');
+                                                            }
+                                                          });
+                                                        }
 
                                                           Navigator.pushNamed(context, PoliticsScreen.pageRoute);
                                                           // Navigator.pushReplacementNamed(context, RegisterScreen.pageRoute);

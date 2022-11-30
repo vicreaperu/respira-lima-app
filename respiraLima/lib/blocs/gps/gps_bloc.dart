@@ -2,12 +2,12 @@
 
 import 'dart:async';
 
-import 'package:app4/blocs/blocs.dart';
+import 'package:app4/helpers/helpers.dart';
+import 'package:app4/share_preferences/share_preferences.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart' as location;
-import 'package:meta/meta.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
 part 'gps_event.dart';
@@ -37,6 +37,20 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
 
     add(GpsAndPermissionEvent(
         isGpsEnabled: gpsInitStatus[0], isGpsPermissionGranted: gpsInitStatus[1]));
+    if(isAndroid){
+      await getAndroidDeviceReleaseType().then((release) {
+        final double? releaseVal = double.tryParse(release);
+        print('MODE----> DEVICE FINAL RESP. $release');
+        if(releaseVal !=null){
+          print('MODE----> DEVICE is $releaseVal < 10 ?? ${releaseVal < 10}');
+
+        } else{
+          print('MODE----> DEVICE FINAL RESP. $releaseVal');
+
+        }
+        
+      });
+    }
   }
 
   Future<bool> _isPermissionGranted() async {
@@ -63,7 +77,24 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
 
     switch (status) {
       case ph.PermissionStatus.granted:
-        locationPlugin.enableBackgroundMode(enable: true);
+
+      if(isAndroid){
+        final bool? isAndroidNew = await isAndroidDeviceIgualUpper10();
+        if(isAndroidNew != null){
+          if(!isAndroidNew){
+            print('MODE---->>> before like ios mode');
+          locationPlugin.enableBackgroundMode(enable: true);
+          await Preferences.setoldAndroid(true);
+          print('MODE---->>> after like ios mode');
+          } 
+        } else{
+          print('MODE---->>> before null like ios mode');
+          locationPlugin.enableBackgroundMode(enable: true);
+          await Preferences.setoldAndroid(true);
+          print('MODE---->>> after null like ios mode');
+        }
+      }
+        if(isIOS) locationPlugin.enableBackgroundMode(enable: true); //BACKGROUNDXXXX add also for // pool
         add(GpsAndPermissionEvent(
             isGpsEnabled: state.isGPSEnabled, isGpsPermissionGranted: true));
         break;

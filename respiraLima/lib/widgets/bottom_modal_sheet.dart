@@ -1,8 +1,6 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:app4/db/principal_db.dart';
 import 'package:app4/delegates/delegates.dart';
 import 'package:app4/models/models.dart';
-import 'package:app4/services/services.dart';
 import 'package:app4/share_preferences/preferences.dart';
 import 'package:app4/themes/themes.dart';
 
@@ -12,8 +10,7 @@ import 'package:app4/ui/ui.dart';
 import 'package:app4/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
+
 
 /// TODO: POPUP WHEN NO INTERNET .......
 ///
@@ -275,12 +272,14 @@ class BottomModalMonitoreando extends StatelessWidget {
                 BtnEndNavigation(
                   text: ' Finalizar',
                   btnColor: AppTheme.primaryOrange,
-                  icon: Icons.navigation,
+                  icon: Icons.near_me_rounded ,
                   onPressed: () async {
                     mapBloc.add(OnStartLoading());
                     callbackEnd();
                     await navigationBloc.postTrackingPositionMikel();
-                    navigationBloc.add(StopNavigationEvent());
+                    // navigationBloc.add(StopNavigationEvent());
+                    await navigationBloc.stopNavigation();
+                    
                     mapBloc.add(OnStopLoading());
                   },
                 ),
@@ -296,8 +295,8 @@ class BottomModalMonitoreando extends StatelessWidget {
                             ? 'Peatón'
                             : 'Ciclista',
                         profileIcon: state.navigationProfile == 'walking'
-                            ? Icons.nordic_walking
-                            : Icons.pedal_bike,
+                            ? Icons.directions_run
+                            : Icons.directions_bike_outlined ,
                         mode: state.navigationMode == 'monitoreo'
                             ? 'Acompañamiento'
                             : 'Ruteo',
@@ -469,7 +468,7 @@ class BottomModalMonitoreo extends StatelessWidget {
                 Expanded(
                   child: BtnNavigationMode(
                     name: 'Peatón',
-                    icon: Icons.nordic_walking,
+                    icon: Icons.directions_run,
                     isFocus: state.navigationProfile == 'walking',
                     callback: () {
                       navigationBloc.add(WalkingNavigationProfileEvent());
@@ -482,7 +481,7 @@ class BottomModalMonitoreo extends StatelessWidget {
                 Expanded(
                   child: BtnNavigationMode(
                     name: 'Ciclista',
-                    icon: Icons.pedal_bike,
+                    icon: Icons.directions_bike_outlined ,
                     isFocus: state.navigationProfile == 'cycling',
                     callback: () {
                       navigationBloc.add(CyclingNavigationProfileEvent());
@@ -505,7 +504,7 @@ class BottomModalMonitoreo extends StatelessWidget {
           btnWidth: double.infinity,
           btnColor: AppTheme.primaryAqua,
           text: ' Iniciar',
-          icon: Icons.navigation,
+          icon: Icons.near_me_rounded ,
           onPressed: () async {
             // mapBloc.add(OnStartLoading());
 
@@ -617,14 +616,22 @@ class BottomModalRuteo extends StatelessWidget {
     final navigationBloc = BlocProvider.of<NavigationBloc>(context, listen: false);
     if(result.manual == true)
     {
-      await mapBloc.updateForSearchData();
-      searchBloc.add(OnActivateManualMarkerEvent());
-      return;
+      if(result.coordinates != null && result.streetName!= null){
+         mapBloc.updateForSearchData3(coordinates: result.coordinates!, streetName: result.streetName!);
+        searchBloc.add(OnActivateManualMarkerEvent());
+        return;
+      }
+      else{
+        await mapBloc.updateForSearchData();
+        searchBloc.add(OnActivateManualMarkerEvent());
+        return;
+      }
     } 
     else{
       if(result.coordinates != null && result.streetName!= null){
-        await mapBloc.updateForSearchData2(coordinates: result.coordinates!, streetName: result.streetName!);
+         mapBloc.updateForSearchData2(coordinates: result.coordinates!, streetName: result.streetName!);
         navigationBloc.add(OnSelectingRoute(result.coordinates!));  
+        return;
       }
     }
   }
@@ -734,7 +741,7 @@ class BottomModalRuteo extends StatelessWidget {
                     Expanded(
                       child: BtnNavigationMode(
                         name: 'Peatón',
-                        icon: Icons.nordic_walking,
+                        icon: Icons.directions_run,
                         isFocus: state.navigationProfile == 'walking',
                         callback: () {
                           navigationBloc.add(WalkingNavigationProfileEvent());
@@ -747,7 +754,7 @@ class BottomModalRuteo extends StatelessWidget {
                     Expanded(
                       child: BtnNavigationMode(
                         name: 'Ciclista',
-                        icon: Icons.pedal_bike,
+                        icon: Icons.directions_bike_outlined ,
                         isFocus: state.navigationProfile == 'cycling',
                         callback: () {
                           navigationBloc.add(CyclingNavigationProfileEvent());
@@ -780,9 +787,14 @@ class BottomModalRuteo extends StatelessWidget {
               TextFormField(
                 readOnly: true,
                 onTap: () async {
-                  final result = await showSearch(context: context, delegate: SearchDestinationDelegate());
-                  if (result == null) return;
-                  searchActions(context, result);
+                  await showSearch(context: context, delegate: SearchDestinationDelegate()).then((result) {
+                    mapBloc.add(WillStopFollowingUser());
+                    if (result != null){
+                      searchActions(context, result);
+                    }
+                    
+
+                  });
                 },
                 autocorrect: false,
                 keyboardType:
@@ -815,7 +827,7 @@ class BottomModalRuteo extends StatelessWidget {
             // state.navLoading || locationBloc.state.modifyForTesting 
             ? AppTheme.gray50 : AppTheme.primaryAqua,
             text: ' Iniciar',
-            icon: Icons.navigation,
+            icon: Icons.near_me_rounded ,
             onPressed: 
             state.navLoading 
             // state.navLoading || locationBloc.state.modifyForTesting

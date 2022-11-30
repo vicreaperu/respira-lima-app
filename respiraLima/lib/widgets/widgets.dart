@@ -1,4 +1,6 @@
-
+export 'package:app4/widgets/btn_compass.dart';
+export 'package:app4/widgets/manual_marker_lite.dart';
+export 'package:app4/widgets/header_speacker.dart';
 export 'package:app4/widgets/header_acompanhamiento.dart';
 export 'package:app4/widgets/to_follow_widget.dart';
 export 'package:app4/widgets/history_tracking_per_point_v2.dart';
@@ -23,4 +25,4 @@ export 'package:app4/widgets/card_container.dart';
 export 'package:app4/widgets/manual_marker.dart';
 export 'package:app4/widgets/searchbar.dart';
 export 'package:app4/widgets/side_menu.dart';
-export 'package:app4/widgets/welcome_backgroud.dart';
+export 'package:app4/widgets/welcome_backgroud.dart'; 

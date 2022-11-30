@@ -4,6 +4,9 @@ class PointModel {
   final double lat, lon;
   final String timestamp, streetName;
   final int pointNumber;
+  final int i;
+  final int j;
+  final String gridTimeId;
   final double pm25;
 
   PointModel({
@@ -12,6 +15,9 @@ class PointModel {
     required this.timestamp, 
     required this.streetName, 
     required this.pointNumber, 
+    this.i = 0,
+    this.j = 0,
+    this.gridTimeId = '2022-01-01-00-00-00',
     this.pm25 = 0,
     });
 
@@ -24,6 +30,9 @@ class PointModel {
       timestamp  : map["time_stamp"] , 
       streetName : map["street_name"]  , 
       pm25       : map["pm25"]         ,
+      i          : map["i"]  ?? 0      ,
+      j          : map["j"]  ?? 0     ,
+      gridTimeId : map["gridTimeId"] ?? '2022-01-01-01-01-01',
       );
   }
 
@@ -36,6 +45,10 @@ class PointModel {
       "time_stamp"   : timestamp,
       "street_name"  : streetName,
       "pm25"         : pm25,
+      "i"            : i,
+      "j"            : j,
+      "gridTimeId"   : gridTimeId,
+
 
     };
   }
@@ -48,6 +61,16 @@ class PointModel {
       "pm25"          : pm25,
       // "street_name"  : streetName,
 
+    };
+  }
+  Map<String, dynamic> toMapToSendNew() {
+    return {
+      "coordinates"   : "${lat}_$lon",
+      "point_number"  : pointNumber,
+      "timestamp"     : timestamp,
+      "pm25"          : pm25,
+      "code"          : "${i}_${j}_$gridTimeId",
+      // "street_name"  : streetName,
     };
   }
 }

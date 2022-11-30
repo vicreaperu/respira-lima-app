@@ -13,6 +13,7 @@ import 'package:app4/themes/themes.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
@@ -26,10 +27,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final NavigationBloc navigationBloc;
   // final SocketService socketService;
   GoogleMapController? _mapController;
-  CameraPosition? cameraPosition = const CameraPosition(target: LatLng(0,0));
-
+  // CameraPosition? cameraPosition = const CameraPosition(target: LatLng(0,0));
+  // bool updateData = true;
   LatLng? lastPositionToCompare = const LatLng(0, 0);
-  bool updateData = true;
   bool isCameraTargerOnArea = true;
   late double maxLatitude ;
   late double maxLongitude;
@@ -52,8 +52,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<OnMapInitializedEvent>(_onInitMap);
 
     on<UpdateForSearchData>((event, emit) {
+      final LatLng destinadion = LatLng(event.lat, event.lng);
+      emit(state.copyWith(forSearchLatLng: destinadion, forSearchStreetName: event.streetName));
       
-      emit(state.copyWith(forSearchLatLng: LatLng(event.lat, event.lng), forSearchStreetName: event.streetName));
       // emit(state.copyWith(forSearchLatLng: LatLng(event.lat, event.lng), forSearchPlaceMark: event.placeMarks));
       
     },);
@@ -61,7 +62,17 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     
     
     on<AddTrackingRoute>((event, emit) => emit(state.copyWith(plannedRoutes: event.plannedRoute)),);
+
+
+    on<DataIsUpdatedEvent>((event, emit) => emit(state.copyWith(updateData: true, cameraPosition: event.cameraPosition)),);
+    on<MustUpdateDataEvent>((event, emit) => emit(state.copyWith(updateData: false)),);
+    
+    
     on<RemoveTrackingRoute>((event, emit) => emit(state.copyWith(plannedRoutes: [])),);
+    
+    
+    
+    on<DrawMarkerEvent>((event, emit) => emit(state.copyWith(markers: event.markers)),);
 
 
     on<IsTheCameraTargetInsideAreEvent>((event, emit) => emit(state.copyWith(isTheCameraTargetOnAre: true)),);
@@ -122,11 +133,60 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           navigationBloc.add(OffOutOfAreaAlertEvent());
         }
       }
-      if(navigationBloc.state.isNavigating && state.plannedRoutes.isNotEmpty){
-        final TrackingPoint actualPoint = TrackingPoint(locationBloc.state.lastKnownLocation!.latitude, locationBloc.state.lastKnownLocation!.longitude);
+      if(navigationBloc.state.navigationMode == 'ruteo' && navigationBloc.state.isNavigating && state.plannedRoutes.isNotEmpty){
+        final double startLatitude = locationBloc.state.lastKnownLocation!.latitude;
+        final double startLongitude = locationBloc.state.lastKnownLocation!.longitude;
+
+        final TrackingPoint actualPoint = TrackingPoint(startLatitude, startLongitude);
         final Map<String, dynamic> minDistanc = state.plannedRoutes.first.getMinDistances(actualPoint);
-        print('Min distance is $minDistanc');
-        if(minDistanc['global_min_distance']*10000>2){
+        final initInterval = minDistanc['segment'][0];
+        final endInterval = minDistanc['segment'][1];
+        final double endLatitude = locationBloc.state.myRoute[endInterval].latitude;
+        final double endLongitude = locationBloc.state.myRoute[endInterval].longitude;
+        print('Min distance is endLatitude $endLatitude');
+        print('Min distance is endLongitude $endLongitude');
+        if(navigationBloc.state.speakRoute){
+          for (InstructionsModel instruction in  navigationBloc.state.navigationInstruction){
+            if( initInterval >= instruction.initInterval && endInterval <= instruction.endInterval){
+              print('Min distanceX actualInterval/InstructionInterval $initInterval/${instruction.initInterval} - $endInterval/${instruction.endInterval}  ');
+              final double endLatitudeX = locationBloc.state.myRoute[instruction.endInterval].latitude;
+              final double endLongitudeX = locationBloc.state.myRoute[instruction.endInterval].longitude;
+              final distance = Geolocator.distanceBetween(startLatitude,startLongitude,endLatitude,endLongitude);
+              final distanceX = Geolocator.distanceBetween(startLatitude,startLongitude,endLatitudeX,endLongitudeX);
+              final i = navigationBloc.state.navigationInstruction.indexOf(instruction);
+              final newInstructions = [...navigationBloc.state.navigationInstruction];
+              
+              if(distanceX < 120 && distanceX > 80 && instruction.state == 0){
+                print('Min distanceX MUST SPEAK 2222');
+                final newInstruction = instruction.copyWith(state: 1);
+                newInstructions[i] = newInstruction;
+                final newTextToSpeak = "En 100 metros, ${newInstructions[i+1].description}";
+                navigationBloc.add(UpdateAndReadNavigationInstructions(instructions: newInstructions, textInstruction: newTextToSpeak));
+                // instruction.state = 1;
+              }
+              if(distanceX < 40 && instruction.state != 2){
+                print('Min distanceX MUST SPEAK 22222');
+                final newInstruction = instruction.copyWith(state: 2);
+                newInstructions[i] = newInstruction;
+                navigationBloc.add(UpdateAndReadNavigationInstructions(instructions: newInstructions, textInstruction: newInstructions[i+1].description));
+
+              }
+              print('Min distanceX is minDistance $distance');
+              print('Min distanceXXXX is minDistance $distanceX');
+              break;
+            }
+          }
+              
+        }
+        // ax >= bx
+        // ay <= by
+
+        print('Min distanceX is minDistance $minDistanc');
+        
+        print('Min distance is actualPointX ${actualPoint.x}');
+        print('Min distance is actualPointY ${actualPoint.y}');
+        print('Min distancex   ------- is min distance ${minDistanc['global_min_distance']*100000}');
+        if(minDistanc['global_min_distance']*100000>30){
           print('Min distance OUT OF ROUTE');
           add(RemoveTrackingRoute());
           final finalDestin = locationBloc.state.myRoute.last;
@@ -152,7 +212,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       }
       
       if (!state.isFollowingUser) return;
-      moveCamera(locationState.lastKnownLocation!);
+      moveCamera(locationState.lastKnownLocation!,0, locationState.lastKnownLocationHeading!);
     });
 
     _init();
@@ -178,8 +238,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   Future updateForSearchData() async{
     // final double lat = locationBloc.state.lastKnownLocation?.latitude ?? 0;
     // final double lng = locationBloc.state.lastKnownLocation?.longitude ?? 0;
-    final lat = cameraPosition?.target.latitude ?? 0;
-    final lng = cameraPosition?.target.longitude ?? 0;
+    final lat = state.cameraPosition.target.latitude;
+    final lng = state.cameraPosition.target.longitude;
     if(lat != 0 && lng != 0) {
         print('For updating name $lat, $lng');
         String streetName = 'SN';
@@ -191,32 +251,66 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         add(UpdateForSearchData(lat: lat, lng: lng, streetName: streetName));
       }
   }
-  Future updateForSearchData2({required LatLng coordinates, required String streetName}) async{
+
+  void updateForSearchData2({required LatLng coordinates, required String streetName}) async{
     
     add(UpdateForSearchData(lat: coordinates.latitude, lng: coordinates.longitude, streetName: streetName));
       
   }
 
+  void  updateForSearchData3({required LatLng coordinates, required String streetName}) async{
+    moveCamera(coordinates, 0, null);
+    add(UpdateForSearchData(lat: coordinates.latitude, lng: coordinates.longitude, streetName: streetName));
+      
+  }
 
-  void drawRoutePolyline( RouteDestination destination) async {
-    final customMakers = await getAssetImageMarker();
-    final startMarker = Marker(
-      markerId: const MarkerId('startMark'),
-      position: destination.points.first,
-      icon: customMakers,
-      infoWindow: const  InfoWindow(
-        title: 'Inicio',
-        snippet: 'Este es el punto de incio de mi ruta'
-      ),
-      );
+  void drawMyDestination(LatLng destination) async{
+    final customMakersFinal = await getFinishAssetImageMarker();
     final endMarker = Marker(
       markerId: const MarkerId('endMark'),
-      position: destination.points.last,
-      icon: customMakers,
+      position: destination,
+      icon: customMakersFinal,
       infoWindow: const InfoWindow(
       title: 'Fin',
         snippet: 'Este es el punto de final de mi ruta'
       ),
+      onDrag: (newPosition) {
+        print('marker----> New POSITION: $newPosition');
+      },
+      );
+    final currentMarkers = Map<String, Marker>.from(state.markers);
+    // currentMarkers['startMark'] = startMarker;
+    currentMarkers['endMark'] = endMarker;
+    add(DrawMarkerEvent(currentMarkers));
+  }
+
+
+  void drawRoutePolyline( RouteDestination destination) async {
+    // final customMakersInitial = await getAssetImageMarker();
+    final customMakersFinal = await getFinishAssetImageMarker();
+    // final startMarker = Marker(
+    //   markerId: const MarkerId('startMark'),
+    //   position: destination.points.first,
+    //   icon: customMakersInitial,
+    //   infoWindow: const  InfoWindow(
+    //     title: 'Inicio', 
+    //     snippet: 'Este es el punto de incio de mi ruta'
+    //   ),
+    //   onDrag: (newPosition) {
+    //     print('marker----> New POSITION: $newPosition');
+    //   },
+    //   );
+    final endMarker = Marker(
+      markerId: const MarkerId('endMark'),
+      position: destination.points.last,
+      icon: customMakersFinal,
+      infoWindow: const InfoWindow(
+      title: 'Fin',
+        snippet: 'Este es el punto de final de mi ruta'
+      ),
+      onDrag: (newPosition) {
+        print('marker----> New POSITION: $newPosition');
+      },
       );
     final myRoute = Polyline(
       polylineId: const PolylineId('.route'),
@@ -229,23 +323,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     final currentPolylines = Map<String, Polyline>.from(state.polylines);
     currentPolylines['.route'] = myRoute;
     final currentMarkers = Map<String, Marker>.from(state.markers);
-    currentMarkers['startMark'] = startMarker;
+    // currentMarkers['startMark'] = startMarker;
     currentMarkers['endMark'] = endMarker;
 
 
 
     add(DisplaysPolylineEvents(currentPolylines, currentMarkers));
 
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 50));
     // _mapController?.showMarkerInfoWindow(const MarkerId('startMark'));
   }
 
   void drawAllAlertMarkers( RouteDestination destination) async {
-    final customMakers = await getAssetImageMarker();
+    // final customMakers = await getAssetImageMarker();
     final startMarker = Marker(
       markerId: const MarkerId('startMark'),
       position: destination.points.first,
-      icon: customMakers,
+      // icon: customMakers,
       infoWindow: const  InfoWindow(
         title: 'Inicio',
         snippet: 'Este es el punto de incio de mi ruta'
@@ -254,7 +348,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     final endMarker = Marker(
       markerId: const MarkerId('endMark'),
       position: destination.points.last,
-      icon: customMakers,
+      // icon: customMakers,
       infoWindow: const InfoWindow(
       title: 'Fin',
         snippet: 'Este es el punto de final de mi ruta'
@@ -286,7 +380,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   void _onStartFollowing(WillStartFollowingUser event, Emitter<MapState> emit){
     emit(state.copyWith(isFollowingUser: true));
     if (locationBloc.state.lastKnownLocation == null) return;
-    moveCamera(locationBloc.state.lastKnownLocation!);
+    moveCamera(locationBloc.state.lastKnownLocation!,0, locationBloc.state.lastKnownLocationHeading);
   }
 
 
@@ -367,7 +461,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       int cantI = event.points['num_polylines'];
       int cantJ = 0;
-      final cantPolilynes = cantI > 200 ? 199 : cantI/1-1;
+      final cantPolilynes = cantI > 180 ? 179 : cantI/1-1;
 
       for(int i = 0; i < cantPolilynes; i++){
         cantJ = event.points["polylines"][i]['num_coords'];
@@ -399,10 +493,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // currentPolylines['.myRoute'] = myRoute;
       emit(state.copyWith(polylines: currentPolylines));
       // TODO: VERIFY THIS...
-      if(lastPositionToCompare?.latitude == cameraPosition?.target.latitude){
-        updateData = false;
+      if(lastPositionToCompare?.latitude == state.cameraPosition.target.latitude){
+        
+        add(MustUpdateDataEvent()); //updateData = false;
       } else{
-        lastPositionToCompare = cameraPosition?.target ?? const LatLng(0, 0);
+        lastPositionToCompare = state.cameraPosition.target;
       }
 
       }
@@ -491,24 +586,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     print('---------NEW TILD-----ww----');
     
-    double newBearing = cameraPosition?.bearing ?? MapPreferences.initialBearing;
+    double newBearing = state.cameraPosition.bearing;
     // if(newBearing > 0 && )
     
 
     CameraUpdate cameraUpdate = CameraUpdate.newCameraPosition(CameraPosition(
-      target : cameraPosition?.target ?? locationBloc.state.lastKnownLocation!,
-      tilt   : cameraPosition?.tilt ?? MapPreferences.initialTild,
-      zoom   : cameraPosition?.zoom ?? MapPreferences.initialZoom,
+      target : state.cameraPosition.target,
+      tilt   : state.cameraPosition.tilt,
+      zoom   : state.cameraPosition.zoom,
       bearing: newBearing + 1,    
       ));
     _mapController!.animateCamera(cameraUpdate);
     cameraUpdate = CameraUpdate.newCameraPosition(CameraPosition(
-      target : cameraPosition?.target ?? locationBloc.state.lastKnownLocation!,
-      tilt   : cameraPosition?.tilt ?? MapPreferences.initialTild,
-      zoom   : cameraPosition?.zoom ?? MapPreferences.initialZoom,
+      target : state.cameraPosition.target,
+      tilt   : state.cameraPosition.tilt,
+      zoom   : state.cameraPosition.zoom ,
       bearing: newBearing - 1,    
       ));
-      print('The bearing is ${cameraPosition?.tilt ?? MapPreferences.initialTild}');
     _mapController!.animateCamera(cameraUpdate);
   }
   
@@ -579,11 +673,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void moveCamera(LatLng newLocation) {
+  void moveCamera(LatLng newLocation, double addZoom, double? heading) {
     final cameraUpdate = CameraUpdate.newCameraPosition(CameraPosition(
       target: newLocation, 
-      zoom: MapPreferences.initialZoom,
-      bearing: MapPreferences.initialBearing,
+      zoom: MapPreferences.initialZoom + addZoom,
+      bearing: heading ?? MapPreferences.initialBearing,
       tilt: MapPreferences.initialTild,
       ));
     // final cameraUpdate = CameraUpdate.newLatLng(newLocation);
@@ -648,15 +742,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
   
   bool mustAskForPoint() {
-    final double lonDelta = (lastPositionToCompare!.longitude - cameraPosition!.target.longitude).abs();
-    final double latDelta = (lastPositionToCompare!.latitude -  cameraPosition!.target.latitude).abs();
+    final double lonDelta = (lastPositionToCompare!.longitude - state.cameraPosition.target.longitude).abs();
+    final double latDelta = (lastPositionToCompare!.latitude -  state.cameraPosition.target.latitude).abs();
     bool isInSide = false;
     if(maxLatitude != 0){
       if(
-        maxLongitude > cameraPosition!.target.longitude && 
-        minLongitude < cameraPosition!.target.longitude && 
-        maxLatitude  > cameraPosition!.target.latitude &&
-        minLatitude  < cameraPosition!.target.latitude
+        maxLongitude > state.cameraPosition.target.longitude && 
+        minLongitude < state.cameraPosition.target.longitude && 
+        maxLatitude  > state.cameraPosition.target.latitude &&
+        minLatitude  < state.cameraPosition.target.latitude
       ) {
         isInSide = true;
         add(IsTheCameraTargetInsideAreEvent());

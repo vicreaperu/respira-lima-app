@@ -46,6 +46,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
     on<SetIsUpdating>((event, emit)  => emit(state.copyWith(startUpdating: true)));
     on<StopUpdatingAccountEvent>((event, emit)  => emit(state.copyWith(startUpdating: false)));
+    
+
 
     on<HasAccountEvent>((event, emit)  {
       print('ISSSS A NOT GUEST EVENT<<<<<<----');
@@ -80,28 +82,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _init() async {
     final String navID = await PrincipalDB.getNavigationID();
     bool response = false;
+    print('aaaa---> To init auth----');
     if(navID != '') {
-      print('To init --0');
-      final String? lastKnowTimeNav = await PrincipalDB.getNavigationLastKnowTime();
-      print('Last know time is $lastKnowTimeNav');
+      final int navState = await PrincipalDB.getNavigationState(); 
+      if(navState < 22) {
+        print('To init --0');
+        final String? lastKnowTimeNav = await PrincipalDB.getNavigationLastKnowTime();
+        print('Last know time is $lastKnowTimeNav');
 
-      if(lastKnowTimeNav != null && lastKnowTimeNav != ''){
-        final Duration duration = DateTime.now().difference(DateTime.parse(lastKnowTimeNav));
-        print('Time pased is ${duration.inMinutes}');       
-        if (duration.inMinutes < timeToKillRoute){
-          if(Preferences.userEmail != '' && Preferences.userPassword != ''){
-            print('.....NOT A GUEST 1');
-            add(HasAccountEvent());
+        if(lastKnowTimeNav != null && lastKnowTimeNav != ''){
+          final Duration duration = DateTime.now().difference(DateTime.parse(lastKnowTimeNav));
+          print('Time pased is ${duration.inMinutes}');       
+          if (duration.inMinutes < timeToKillRoute){
+            if(Preferences.userEmail != '' && Preferences.userPassword != ''){
+              print('.....NOT A GUEST 1');
+              add(HasAccountEvent());
+            } else{
+              add(HasAccountAsGuestEvent());
+            }
+            await updateTokenEvent();
+            print('To init --1');
+            response = true;
           } else{
-            add(HasAccountAsGuestEvent());
-          }
-          await updateTokenEvent();
-          print('To init --1');
-          response = true;
-        } else{
-          PrincipalDB.clearNavigationDetail();   
-          // Preferences.clearNavigationPreferences();   
-        } 
+            await PrincipalDB.clearNavigationDetail();   
+            // Preferences.clearNavigationPreferences();   
+          } 
+        }
+      } else{
+        await PrincipalDB.clearNavigationDetail();
       }
     }
     print('To init --3');
@@ -127,9 +135,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
     if(!response){
       print('To init --5');
-      Preferences.cleanPreferences();
+      await Preferences.cleanLitePreferences();
+      await PrincipalDB.clearUserInfo();
       add(NotHasAccountEvent());
     }
+    print('aaaa---> To end auth----');
   }
 
   Future updateTokenEvent() async {
@@ -147,16 +157,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           // Preferences.isFirstTime = false;
           // Preferences.firebaseToken = token;
           // Preferences.timeFirebaseTokenUpdated = DateTime.now().toString();
+          print('GUEST----> HasValidAccountEvent ');
           add(HasValidAccountEvent());
+          print('GUEST----> HasValidAccountEvent x2');
           // if(!state.startUpdating){
           //   print('will start updating');
           //   add(SetIsUpdating());
           //   add(StartUpdatingAccountEvent());
           // }
         }else {
+            print('GUEST----> NotHasAccountEvent ');
             add(NotHasAccountEvent());
-            Preferences.cleanPreferences();
-            print('will not start updating');
+            await Preferences.cleanLitePreferences();
+            print('GUEST----> will not start updating');
+            print('GUEST----> NotHasAccountEvent x2');
           // TODO: with if the token is nos updating // implement IT
         }
       // } else{

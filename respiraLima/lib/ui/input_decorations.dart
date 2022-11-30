@@ -30,6 +30,7 @@ class InputDecotations {
     }
   ){
     return InputDecoration(
+      
     hintText: hintText,
     labelText: labelText,
     hintStyle: const TextStyle(color: Colors.black26),
@@ -50,6 +51,85 @@ class InputDecotations {
     suffixIcon: sufixIcon != null ? Icon(sufixIcon, color:  AppTheme.black,) : null,
     border: const OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(10)),
+    ) 
+    );
+
+  }
+  static InputDecoration questionsInputDecoration(
+    {required String hintText,
+    required String labelText,
+
+    IconData? prefixIcon,
+    IconData? sufixIcon
+    }
+  )
+  {
+    return InputDecoration(
+      
+    hintText: hintText,
+    labelText: labelText,
+    hintStyle: const TextStyle(color: Colors.black26),
+    labelStyle: const TextStyle(color: Colors.grey),
+    filled: true,
+    fillColor: Colors.white,
+    hoverColor: Colors.white,
+    // enabledBorder:
+    //     const UnderlineInputBorder(borderSide: BorderSide(color: Colors.deepPurple)),
+    // focusedBorder: const UnderlineInputBorder(
+    //   borderSide: BorderSide(color: AppTheme.black, width: 2),
+    // ),
+    // isDense: true, 
+    // contentPadding: EdgeInsets.fromLTRB(5, 5, 10, 0),
+    focusedBorder: const OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(40)),
+      borderSide: BorderSide(color: AppTheme.white, width: 1),
+    ),
+    prefixIcon: prefixIcon != null ? Icon(prefixIcon, color:  AppTheme.black,) : null,
+    // suffixIcon: sufixIcon != null ? Icon(sufixIcon, color:  AppTheme.black,) : null,
+    suffixIcon: sufixIcon != null ? Icon(sufixIcon, color:  AppTheme.black,) : null,
+    border: const OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(40)),
+      borderSide: BorderSide(color: AppTheme.white, width: 1)
+    ) 
+    );
+
+  }
+  static InputDecoration favoritiesInputDecoration(
+    {
+      required String hintText,
+    // required String labelText,
+
+    IconData? prefixIcon,
+    IconData? sufixIcon
+    }
+  )
+  {
+    return InputDecoration(
+      
+    hintText: hintText,
+    // labelText: labelText,
+    hintStyle: const TextStyle(color: Colors.black),
+    labelStyle: const TextStyle(color: Colors.black),
+    filled: true,
+    fillColor: Colors.white,
+    hoverColor: Colors.white,
+    // enabledBorder:
+    //     const UnderlineInputBorder(borderSide: BorderSide(color: Colors.deepPurple)),
+    // focusedBorder: const UnderlineInputBorder(
+    //   borderSide: BorderSide(color: AppTheme.black, width: 2),
+    // ),
+    // isDense: true, 
+    // contentPadding: EdgeInsets.fromLTRB(5, 5, 10, 0),
+    focusedBorder: const OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(10)),
+      borderSide: BorderSide(color: AppTheme.white, width: 1),
+    ),
+    prefixIcon: prefixIcon != null ? Icon(prefixIcon, color:  AppTheme.black,) : null,
+    // suffixIcon: sufixIcon != null ? Icon(sufixIcon, color:  AppTheme.black,) : null,
+    suffixIcon: sufixIcon != null ? Icon(sufixIcon, color:  AppTheme.black,) : null,
+    border: const OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(10)),
+      borderSide: BorderSide(color: AppTheme.white, width: 1)
     ) 
     );
 

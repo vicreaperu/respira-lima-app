@@ -1,5 +1,4 @@
 import 'package:app4/blocs/blocs.dart';
-import 'package:app4/screens/screens.dart';
 import 'package:app4/themes/themes.dart';
 import 'package:app4/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -92,7 +91,7 @@ class RatingAlert extends StatelessWidget {
                       ),
                       ProfileAndModeAvatar(
                           profile: state.navigationProfile == 'walking' ? 'Peatón' : 'Ciclista',
-                          profileIcon: state.navigationProfile == 'walking' ? Icons.nordic_walking : Icons.pedal_bike,
+                          profileIcon: state.navigationProfile == 'walking' ? Icons.directions_run : Icons.directions_bike_outlined ,
                           mode: state.navigationMode == 'monitoreo' ? 'Acompañamiento' : 'Ruteo',
                           modeIcon: Icons.pin_drop_rounded),
                       const SizedBox(
@@ -101,7 +100,7 @@ class RatingAlert extends StatelessWidget {
                       Row(
                         children: [
                           _CustomColumWithIcon(
-                            title: 'Exposición',
+                            title: 'Exposición PM2.5',
                             textToShow: '${state.navigationDataToShowEnding["exposure"]}µg/m³',
                             boxColor: AppTheme.gray10,
                           ),
@@ -211,7 +210,7 @@ class _CustomColumWithIcon extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              title == 'Exposición'
+              title == 'Exposición PM2.5'
                   ? const SizedBox()
                   : Icon(textToShow == 'Buena'
                           ? Icons.sentiment_satisfied_alt_outlined

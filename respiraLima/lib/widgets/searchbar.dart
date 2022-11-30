@@ -35,7 +35,7 @@ class _SearchBarBody extends StatelessWidget {
       return;
     } else{
       if(result.coordinates != null){
-        await mapBloc.updateForSearchData2(coordinates: result.coordinates!, streetName: result.streetName!);
+         mapBloc.updateForSearchData2(coordinates: result.coordinates!, streetName: result.streetName!);
         navigationBloc.add(OnSelectingRoute(result.coordinates!));  
         return;
       }

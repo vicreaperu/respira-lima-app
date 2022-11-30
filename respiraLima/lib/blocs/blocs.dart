@@ -1,5 +1,5 @@
+export 'package:app4/blocs/user_app_data/user_app_data_bloc.dart';
 export 'package:app4/blocs/app_data/app_data_bloc.dart';
-
 export 'package:app4/blocs/auth/auth_bloc.dart';
 export 'package:app4/blocs/navigation/navigation_bloc.dart';
 export 'package:app4/blocs/search/search_bloc.dart';

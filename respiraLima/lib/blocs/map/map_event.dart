@@ -32,6 +32,12 @@ class UpdateForSearchData extends MapEvent {
 
 class WillStopFollowingUser extends MapEvent {}
 
+class DataIsUpdatedEvent extends MapEvent{
+  final CameraPosition cameraPosition;
+  const DataIsUpdatedEvent({required this.cameraPosition});
+}
+class MustUpdateDataEvent extends MapEvent{}
+
 class WillStartFollowingUser extends MapEvent {}
 
 class UpdateUserPolylineEvent extends MapEvent {
@@ -61,6 +67,10 @@ class DrawPolylinesFromZoneEventPRO extends MapEvent {
 class DrawMarkersFromZoneEvent extends MapEvent {
   final List<LatLng> marks;
   const DrawMarkersFromZoneEvent(this.marks);
+}
+class DrawMarkerEvent extends MapEvent {
+  final Map<String, Marker> markers;
+  const DrawMarkerEvent(this.markers);
 }
 
 

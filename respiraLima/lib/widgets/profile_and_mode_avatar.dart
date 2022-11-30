@@ -1,5 +1,8 @@
+import 'package:app4/blocs/blocs.dart';
 import 'package:app4/themes/themes.dart';
+import 'package:app4/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileAndModeAvatar extends StatelessWidget {
   final String profile;
@@ -14,9 +17,10 @@ class ProfileAndModeAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+
       children: [
-
-
+        //  const HeaderSpeacker(),
+        //  const SizedBox(width: 5,),
          CircleAvatar(
           radius: 17,
           backgroundColor: AppTheme.primaryAqua,

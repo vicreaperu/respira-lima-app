@@ -1,9 +1,7 @@
 import 'package:app4/blocs/blocs.dart';
-import 'package:app4/dataTest/pred1.dart';
 import 'package:app4/db/principal_db.dart';
 import 'package:app4/services/services.dart';
 import 'package:app4/share_preferences/share_preferences.dart';
-import 'package:app4/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -49,11 +47,12 @@ class MapView extends StatelessWidget {
             initialCameraPosition: inicialCameraPosition,
             myLocationEnabled: true,
             compassEnabled: false,
+
             zoomControlsEnabled: false,
             myLocationButtonEnabled: false,
             buildingsEnabled: false,
             onCameraIdle:
-             !mapBloc.updateData ? () {} :
+             !mapBloc.state.updateData ? () {} :
              () async {
 
               
@@ -110,12 +109,14 @@ class MapView extends StatelessWidget {
             }, 
             onCameraMove: (CameraPosition cameraPosition) {
 
-              print('This is the value  CAMMM');
-              mapBloc.cameraPosition = cameraPosition;
-              mapBloc.updateData = true; // TODO: evaluate if put this on start moving camera
+              print('CAMERA------->> ${cameraPosition.bearing}');
+              mapBloc.add(DataIsUpdatedEvent(cameraPosition: cameraPosition));
+              // mapBloc.cameraPosition = cameraPosition;
+              // mapBloc.updateData = true; // TODO: evaluate if put this on start moving camera
   
 
             },
+            // padding: const EdgeInsets.only(top: 100, left: 10),
             onMapCreated: (controller) {
                 
                 mapBloc.add(OnMapInitializedEvent(controller));

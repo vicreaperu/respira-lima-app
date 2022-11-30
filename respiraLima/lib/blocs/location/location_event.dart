@@ -12,12 +12,14 @@ class OnNewUserLocationEvent extends LocationEvent {
   const OnNewUserLocationEvent(this.newLocation);
    
 }
+
 class OnNewUserLocationAndStreetNameEvent extends LocationEvent {
   final LatLng newLocation;
   final String streetName;
-  const OnNewUserLocationAndStreetNameEvent(this.newLocation, this.streetName);
-   
+  final double? heading;
+  const OnNewUserLocationAndStreetNameEvent(this.newLocation, this.streetName, this.heading);
 }
+
 class OnStartFollowingUser extends LocationEvent {}
 class OnStopFollowingUser extends LocationEvent {}
 
@@ -28,6 +30,14 @@ class ClearLocationHistoryEvent extends LocationEvent{}
 
 class OnStartSavingLocationHistory extends LocationEvent{}
 class OffSavingLocationHistory extends LocationEvent{}
+
+class OnBackgroundEvent extends LocationEvent{}
+class OnBackgroundNoNavigationEvent extends LocationEvent{
+  final int? timeWait;
+
+  const OnBackgroundNoNavigationEvent({this.timeWait = 10});
+}
+class OnForegroundEvent extends LocationEvent{}
 
 class AddMyRoute extends LocationEvent{
   final List<LatLng> points;

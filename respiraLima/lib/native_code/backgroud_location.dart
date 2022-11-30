@@ -2,7 +2,7 @@ import 'package:app4/helpers/helpers.dart';
 import 'package:flutter/services.dart';
 
 class BackgroundLocation {
-  final _channel = const MethodChannel('app.meedu/background-location');
+  final _channel = const MethodChannel('app.respira.lima/background-location');
 
   Future<void> startForegroundService() async {
     if (isAndroid) {

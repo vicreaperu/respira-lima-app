@@ -55,7 +55,7 @@ class OnboardingScreen extends StatelessWidget {
                   } 
                   else{
                     final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
-                    authBloc.add(HasAccountEvent());
+                    authBloc.add(HasSimpleAccountEvent());
                     Navigator.pushReplacementNamed(context, LoadingScreen.pageRoute);
                   }
                   // Navigator.pushReplacementNamed(context, OnboardingScreen2.pageRoute);

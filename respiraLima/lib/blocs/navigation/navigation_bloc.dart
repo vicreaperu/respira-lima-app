@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:app4/api/api.dart';
 import 'package:app4/blocs/blocs.dart';
 import 'package:app4/db/db.dart';
+import 'package:app4/helpers/helpers.dart';
 import 'package:app4/models/models.dart';
 import 'package:app4/services/services.dart';
+import 'package:app4/share_preferences/preferences.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
@@ -16,7 +17,7 @@ part 'navigation_event.dart';
 part 'navigation_state.dart';
 
 class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
-  
+  static int limitPoints = 1440;
   final format = DateFormat('yyyy-MM-dd HH:mm:ss');
   final LocationBloc locationBloc;
   final AppDataBloc appDataBloc;
@@ -29,6 +30,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   final int walkingTime = 5;
   final int minToUpdateGrid = 29;
   late final NotificationApi service;
+  late final TtsApi tts;
   NavigationService navigationService;
   AuthService authService;
   NavigationBloc( {
@@ -42,12 +44,26 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     required this.routeService,
     required this.placesPreferencesService,
   }) : super(const NavigationState()) {
+    on<AddUpdateFavoritePlacesDataEvent>((event, emit) {
+        emit(state.copyWith(favoritePlacesData: event.favoritePlacesData));
+      });
+
+
+    on<OffSelectingFavoriteRoute>((event, emit) {
+        emit(state.copyWith(isFavoriteRouteSelected: false));
+      });
+    on<OnSelectingFavoriteRoute>((event, emit) {
+      // locationBloc.add(OnStartFollowingUserXX());
+      emit(state.copyWith(isFavoriteRouteSelected: true, startAndFinalDestination: [event.destination]));
+    });
+
     on<OffSelectingRoute>((event, emit) {
         emit(state.copyWith(isRouteSelected: false));
       });
     on<OnSelectingRoute>((event, emit) {
-        emit(state.copyWith(isRouteSelected: true, startAndFinalDestination: [event.destination]));
-      });
+      // locationBloc.add(OnStartFollowingUserXX());
+      emit(state.copyWith(isRouteSelected: true, startAndFinalDestination: [event.destination]));
+    });
 
     on<OffOutOfAreaAlertEvent>((event, emit) {
         emit(state.copyWith(outOffAreaAlert: false));
@@ -80,12 +96,30 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
         emit(state.copyWith(isOnArea: true));
       });
 
+    on<OnSpeakRouteEvent>((event, emit) {
+        emit(state.copyWith(speakRoute: true));
+      });
+
+
+    on<OffSpeakRouteEvent>((event, emit) {
+        emit(state.copyWith(speakRoute: false));
+      });
     on<OnNavLoadingEvent>((event, emit) {
         emit(state.copyWith(navLoading: true));
       });
+
+      
+    on<UpdateDataPercentEvent>((event, emit) {
+        emit(state.copyWith(dataPercent: event.percent));
+      });
+
+
+
+
     on<OffNavLoadingEvent>((event, emit) {
         emit(state.copyWith(navLoading: false));
       });
+
     on<OnLoadingEvent>((event, emit) {
         emit(state.copyWith(loading: true));
       });
@@ -107,6 +141,17 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
 
     on<PlaceVotesEvent>((event, emit) {
         emit(state.copyWith(locationStars: event.score, locationLiked: event.liked, totalStars: event.votes));
+      });
+    on<AddNavigationInstructions>((event, emit) {
+        emit(state.copyWith(navigationInstruction: event.instructions));
+      });
+
+    on<UpdateAndReadNavigationInstructions>((event, emit) {
+        emit(state.copyWith(navigationInstruction: event.instructions));
+        if(event.textInstruction != null){
+          print('Min distanceX ON EVENT, WILL READ ${event.textInstruction}');
+          tts.speakTts(event.textInstruction!);
+        }
       });
 
 
@@ -165,14 +210,19 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
               // Preferences.navigationInitialInformation = json.encode(event.mapTackingData);
             } 
           } else{
-            navigationDataToShow = [...navigationDataToShow.take(1).toList(), ...navigationDataToShow.skip(2).toList() ,event.reportMap ];
+            if(event.reportMap.streetName == navigationDataToShow.last.streetName){
+              navigationDataToShow = [...navigationDataToShow.take(1).toList(), ...navigationDataToShow.sublist(1,4).toList() ,event.reportMap ];
+            } else{
+              navigationDataToShow = [...navigationDataToShow.take(1).toList(), ...navigationDataToShow.skip(2).toList() ,event.reportMap ];
+            }
           }
         PrincipalDB.navigationLastKnownInformation(event.reportMap.toMap());
         PrincipalDB.navigationLastKnowTime(DateTime.now().toString());
         // Preferences.navigationLastKnownInformation = json.encode(event.mapTackingData);
         // Preferences.navigationLastKnowTime = DateTime.now().toString();
         print('This is the Navagation track data........///////');
-        print(navigationDataToShow);
+        print("BACKDATA---->${navigationDataToShow.last.distance}");
+        print("BACKDATA---->${navigationDataToShow.last.streetName}");
         emit(state.copyWith(navigationDataToShowTracking: navigationDataToShow, isOnArea: true));
       });
     
@@ -194,11 +244,25 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
 
 
 
+    on<OffChangedEvent>((event, emit) {
+        emit(state.copyWith(changed: false));
+      });
+
+
+
     on<WalkingNavigationProfileEvent>((event, emit) {
-        emit(state.copyWith(navigationProfile: 'walking'));
+        emit(state.copyWith(navigationProfile: 'walking', changed: true));
       });
     on<CyclingNavigationProfileEvent>((event, emit) {
-        emit(state.copyWith(navigationProfile: 'cycling'));
+        emit(state.copyWith(navigationProfile: 'cycling', changed: true));
+      });
+
+
+    on<TimeNavigationAirQualityPreferencesEvent>((event, emit) {
+        emit(state.copyWith(navigationAirQualityPref: 'time', changed: true));
+      });
+    on<PollutantNavigationAirQualityPreferencesEvent>((event, emit) {
+        emit(state.copyWith(navigationAirQualityPref: 'pollutant', changed: true));
       });
 
 
@@ -211,9 +275,39 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       emit(state.copyWith(navigationState: 2, isNavigating: true));
 
       });
+    // on<BackgroundStartNavigationEvent>((event, emit) {
+    //   locationBloc.add(OnStartSavingLocationHistory());
+    //   emit(state.copyWith(navigationState: 2, isNavigating: true));
+    //   final int timeToCall = state.navigationProfile == 'cycling' ? cyclingTime : walkingTime;
+    //   Timer.periodic(Duration(seconds: timeToCall), ((timer) async {
+    //     // print('${format2.format(timer.)}');
+    //       print(format.format(DateTime.now()).toString() );
+    //       if(!state.isNavigating){
+    //         print('BACKX Will cancel -------');
+    //         timer.cancel();
+    //       } else{
+    //         print('BACKX asckingg -------');
+    //         final stateT = await postTrackingPositionMikel();
+    //          await PrincipalDB.getAllPoints().then((value) async {
+    //             add(TrackingEvent(PositionReport.fromMap({
+    //               'exposure'    : 10.3,
+    //               'air_quality' : 'Bueno',
+    //               'color'       : '',
+    //               'timestamp'   : '12/12/12',
+    //               'distance'    : '12',
+    //               'street_name' : 'caramandunga',
+    //             })));
+             
+    //          });
+    //         print(state.navigationDataToShowTracking);
+    //       }
+    //   }));
+    //   });
     on<StartNavigationEvent>((event, emit) {
         locationBloc.add(OnStartSavingLocationHistory());
         emit(state.copyWith(navigationState: 2, isNavigating: true));
+        
+        
         final int timeToCall = state.navigationProfile == 'cycling' ? cyclingTime : walkingTime;
         Timer.periodic(Duration(seconds: timeToCall), ((timer) async {
         // print('${format2.format(timer.)}');
@@ -221,18 +315,38 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
           if(!state.isNavigating){
             print('BACKX Will cancel -------');
             timer.cancel();
-          } else{
+          } 
+          else if(!locationBloc.state.isInBackground || isIOS){
             print('BACKX asckingg -------');
             final stateT = await postTrackingPositionMikel();
             print(state.navigationDataToShowTracking);
             print('the state is $stateT');
+          } else{
+            print('POINTCANT--->       es in BACK ${locationBloc.state.isInBackground}');
           }
       }));
       });
     on<StopNavigationEvent>((event, emit) async {
         // final bool response = await postTrackingEnd(); 
         // if (response){
-        emit(state.copyWith(navigationState: 3, isNavigating: false, isRouteSelected: false));
+        emit(state.copyWith(navigationState: 3, isNavigating: false, isRouteSelected: false, navigationInstruction: []));
+        // }
+      });
+    on<OnFavoritiesSpecialEvent>((event, emit) async {
+        emit(state.copyWith(navigationState: state.navigationState + 100));
+      });
+    on<OffFavoritiesSpecialEvent>((event, emit) async {
+      if(state.navigationState >= 100){
+        emit(state.copyWith(navigationState: state.navigationState - 100));
+      } else if(state.navigationState < 0 || state.navigationState >= 4) {
+        emit(state.copyWith(navigationState: 0));
+      }
+      });
+
+    on<OnlyStopNavigationEvent>((event, emit) async {
+        // final bool response = await postTrackingEnd(); 
+        // if (response){
+        emit(state.copyWith(isNavigating: false, navigationInstruction: []));
         // }
       });
     on<EndNavigationEvent>((event, emit) async {
@@ -240,7 +354,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       await postTrackingScore(event.rating);
       });
     on<NoRatingEvent>((event, emit) async {
-      PrincipalDB.navigationID('');
+      await PrincipalDB.navigationID('');
       // Preferences.routeId = '';
       emit(state.copyWith(navigationState: 0));
       });
@@ -297,45 +411,80 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   void _init() async{
     service = NotificationApi();
     service.initialize();
-    print('To init ----');
+    tts = TtsApi();
+    tts.initTts();
+    if(Preferences.speakRoute){
+      
+    }
+    await PrincipalDB.getAllFavoritePlace().then((listPlaces) {
+      add(AddUpdateFavoritePlacesDataEvent(listPlaces));
+    },);
+    print('aaaa---> To init navigation----');
     final navID = await PrincipalDB.getNavigationID();
     // if(Preferences.routeId != ''){
-    if(navID != null && navID != ''){
-      print('To init --ONN-- $navID');
-      // print('To init --navigationInitialInformation-- ${Preferences.navigationInitialInformation}');
-      // print('To init --navigationLastKnownInformation-- ${Preferences.navigationLastKnownInformation}');
-      final navDetails = await PrincipalDB.getStartNavigationDetails();
-      final initialInfo = await PrincipalDB.getNavigationInitialInformation();
-      final lastKnowInfo = await PrincipalDB.getNavigationLastKnownInformation();
+    if(navID != '' ){
+      final navState = await PrincipalDB.getNavigationState();
+      if(navState < 22){
+        print('To init --ONN-- $navID');
+        // print('To init --navigationInitialInformation-- ${Preferences.navigationInitialInformation}');
+        // print('To init --navigationLastKnownInformation-- ${Preferences.navigationLastKnownInformation}');
+        final navDetails = await PrincipalDB.getStartNavigationDetails();
+        final initialInfo = await PrincipalDB.getNavigationInitialInformation();
+        final lastKnowInfo = await PrincipalDB.getNavigationLastKnownInformation();
 
-      if(navDetails != null){
-        add(StartNavigationEvent());
-        // add(LiteStartNavigationEvent());
-        if(navDetails.mode == 'monitoreo'){
-          add(ReturnToNavigationTrackingMonitoreo(
-            navDetails.mode, 
-            navDetails.profile, 
-            initialInfo, 
-            lastKnowInfo,
-            ));
-        } else{
-          add(ReturnToNavigationTrackingRuteo(
-            mode            : navDetails.mode, 
-            profile         : navDetails.profile, 
-            initialReport   : initialInfo, 
-            lastKnowReport  : lastKnowInfo,
-            finalDestination: LatLng(navDetails.destinationLat, navDetails.destinationLng),
-            startDestination: LatLng(navDetails.lat, navDetails.lng),
-            
-            ));
-            await Future.delayed(const Duration(milliseconds: 10));
-            await setRouteWithPrediction();
+        if(navDetails != null){
+        final isGridUpdated = await appDataBloc.checkAndUpdatePredictionsGrid();
+        print('Gridx---->>  gaaaa IS GRID UPDATED??? $isGridUpdated');
+          add(StartNavigationEvent());
+          // add(LiteStartNavigationEvent());
+          if(navDetails.mode == 'monitoreo'){
+            add(ReturnToNavigationTrackingMonitoreo(
+              navDetails.mode, 
+              navDetails.profile, 
+              initialInfo, 
+              lastKnowInfo,
+              ));
+          } else{
+            add(ReturnToNavigationTrackingRuteo(
+              mode            : navDetails.mode, 
+              profile         : navDetails.profile, 
+              initialReport   : initialInfo, 
+              lastKnowReport  : lastKnowInfo,
+              finalDestination: LatLng(navDetails.destinationLat, navDetails.destinationLng),
+              startDestination: LatLng(navDetails.lat, navDetails.lng),
+              
+              ));
+              await Future.delayed(const Duration(milliseconds: 10));
+              await setRouteWithPrediction();
+          }
         }
 
-
-        
+      } else{
+        await PrincipalDB.clearNavigationDetail();
       }
     }
+    if(Preferences.userCiclistPeaton == 1){
+      add(WalkingNavigationProfileEvent());
+    } else if(Preferences.userCiclistPeaton == 2){
+      add(CyclingNavigationProfileEvent());
+    }
+    if(Preferences.userAirQualityPref == 1){
+      add(PollutantNavigationAirQualityPreferencesEvent());
+    } else if(Preferences.userAirQualityPref == 2){
+      add(TimeNavigationAirQualityPreferencesEvent());
+    }
+    print('aaaa---> To end navigation----');
+  }
+
+
+  Future onlyStopNavigation() async{
+    add(OnlyStopNavigationEvent());
+    await PrincipalDB.navigationState(22);
+  }
+
+  Future stopNavigation() async{
+    add(StopNavigationEvent());
+    await PrincipalDB.navigationState(33);
   }
 
 /// ********************1 START NAVIGATION **************************
@@ -371,26 +520,36 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   }
 /// ********************1 START NAVIGATION **************************
 /// ********************1 START NAVIGATION **************************
-
+Future<bool> postTrackingStartMikelSpeach() async{
+    bool returnAnswer = false;
+    await tts.speakTts('Iniciando recorrido');
+    return returnAnswer;
+  }
 
   Future<bool> postTrackingStartMikel() async{
-    bool returnAnswer = true;
+    bool returnAnswer = false;
     //TODO VEFIRY GRID STATUS
     // await PrincipalDB.countAllPredictionsGridValues().then((cantVal) async {
     //   print('grid cant val is $cantVal');
     //   if(cantVal > 0){
-    //     print('grid IN, MUST UPDATE: ${cantVal > 0}');
-    await appDataBloc.checkAndUpdatePredictionsGrid().then((isUpdated) {
-      if(isUpdated){
+    //     print('grid IN, MUST UPDATE: ${cantVal > 0}');    
+    print('Following---2> ${DateTime.now().toString()}');
+    await appDataBloc.checkAndUpdatePredictionsGrid().then((isUpdated) async {
+      if(isUpdated == 200){
         returnAnswer = true;
       } else{
+        await authService.askForTokenUpdating().then((value) {
+          print('TOKEN IS UPDATED XXXXXXX? $value');
+        });
         returnAnswer = false;
       }
-      });
+    });
+    print('Following---3> ${DateTime.now().toString()}');
     //   }
     // });
     if(returnAnswer){
       final token = await PrincipalDB.getFirebaseToken();
+    print('Following---4> ${DateTime.now().toString()}');
       final resp = await navigationService.postTrackingStartMikel(
           idToken: token,
           // idToken: Preferences.firebaseToken,
@@ -401,6 +560,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
           streetName: locationBloc.state.lastKnownLocationStreetName!,
         );
         add(ClearAllDataToshow());
+      print('Following---5> ${DateTime.now().toString()}');
         await PrincipalDB.clearNavigationDetail();
         // Preferences.clearNavigationPreferences();
         print('resp is $resp');
@@ -412,8 +572,9 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
             await PrincipalDB.navigationCantPoints(0);
             await PrincipalDB.navigationNumPointToSent(0);
             await PrincipalDB.navigationLastTimeSent(DateTime.now().toString());
-            PrincipalDB.navigationLastKnowTime(DateTime.now().toString());
-            PrincipalDB.startNavigationDetails(StartNavigationModel(
+            await PrincipalDB.navigationLastKnowTime(DateTime.now().toString());
+            await PrincipalDB.navigationInitTime(DateTime.now().toString());
+            await PrincipalDB.startNavigationDetails(StartNavigationModel(
               profile: state.navigationProfile, 
               mode: state.navigationMode, 
               startTime: DateTime.now().toString(), 
@@ -437,9 +598,11 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
             //         body: 'Regresar a la pagin a de ruteo');
             // backgroundLocationRepository.startForegroundService();
             KeepScreenOn.turnOn();
+            // add(BackgroundStartNavigationEvent());
             // add(LiteStartNavigationEvent());
             add(StartNavigationEvent()); // COMMENTED BEACUSE WE DO THIS ON FOREGROUND
             add(OnAlertScreenOnEvent());
+            tts.speakTts('Iniciando Recorrido');
             returnAnswer = true;
           } else if (resp['status'] == 401){
               await authService.askForTokenUpdating();
@@ -448,6 +611,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
           print('THE ERROR ISSS  ---${resp["error"]}');
         }
     }
+    print('Following---10> FIN${DateTime.now().toString()}');
     return returnAnswer;
   }
 /// ********************2 TRACKING POSITION **************************
@@ -474,6 +638,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     final lastPointSend = await PrincipalDB.getNavigationNumPointToSent();
     if(lastPointSend != null){
       final listTosend = await PrincipalDB.getPointsToSend(lastPointSend);
+      print('3error--------------->>>>> POINTS$listTosend');
       if(listTosend.isNotEmpty){
         await navigationService.postTrackingPoints(
             routeId:  routeID,
@@ -506,13 +671,15 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
 /////////////////// -------------- POST TRACKING POSITON MIKEL --------------
   Future<bool> postTrackingPositionMikel({LatLng? position, String? streetName}) async{
     bool dataToSend = false;
+    
     final int pointCount = await PrincipalDB.getNavigationCantPoint();
-    PrincipalDB.navigationCantPoints(pointCount + 1);
-    await locationPlugin.getLocation().then((posit) {
-      print('BACKX --------locationPlugin${posit.latitude}');
-      print('BACKX --------locationPlugin${posit.longitude}');
+    print('POINTCANT--->       FOREGROUND $pointCount  cant at ${DateTime.now().toString()}');
+    await PrincipalDB.navigationCantPoints(pointCount + 1);
+    // await locationPlugin.getLocation().then((posit) {
+    //   print('BACKX --------locationPlugin${posit.latitude}');
+    //   print('BACKX --------locationPlugin${posit.longitude}');
 
-    });
+    // });
     // Geolocator.getCurrentPosition().then((posit){
     //   print('BACKX GEOCODING${posit.latitude}');
     //   print('BACKX GEOCODING${posit.longitude}');
@@ -520,9 +687,27 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     final LatLng actualPosition = position ?? locationBloc.state.lastKnownLocation!;
     final String actualstreetName = streetName ?? locationBloc.state.lastKnownLocationStreetName!;
     // isOnAreaFastQuestionWithPoint();
-    print('BACKX   ${locationBloc.state.lastKnownLocation?.latitude}');
-    print('BACKX   ${locationBloc.state.lastKnownLocation?.longitude}');
+    print('POINTCANT--->       FOREGROUND    ${locationBloc.state.lastKnownLocation?.latitude}');
+    print('POINTCANT--->       FOREGROUND    ${locationBloc.state.lastKnownLocation?.longitude}');
     final routeID = await PrincipalDB.getNavigationID();
+
+
+
+    //////// FOR TESTING, IMPLEMENT MORE VALIDATIONS HERE
+    await appDataBloc.checkAndUpdatePredictionsGrid().then((isUpdated) async {
+      if(isUpdated == 200){
+        // returnAnswer = true;
+      } else{
+        await authService.askForTokenUpdating().then((value) {
+          print('TOKEN IS UPDATED XXXXXXX? $value');
+        });
+        // returnAnswer = false;
+      }
+    });
+
+
+
+
     await navigationService.postTrackingPositionMikelV2(
         routeId:  routeID,
         // routeId:  Preferences.routeId,
@@ -534,8 +719,8 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       ).then((value) async {
         // print('mikel resp ..............Will update Date .............');
 
-        // print("mikel resp  ss${value.keys}");
-        // print("mikel resp ss${value.values}");
+        print("4error----> resp  ss${value.keys}");
+        print("3error----> resp ss${value.values}");
         // print("mikel resp ss${value.runtimeType}");
       
         if(value['error'] == null ){
@@ -568,14 +753,44 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
           // await authService.askForTokenUpdating(); //value['status'] == 401
           // add(OutOfAreaEvent());  // value['status'] == 403
           print('THE ERROR ISSS  ---${value["error"]}');
-      }
+       }
       },);
     final dataToshow = await PrincipalDB.countAllPoints();
     final lastTimeSend = await PrincipalDB.getNavigationLastTimeSent();
+    final initTime = await PrincipalDB.getNavigationInitTime();
+
     
+    if(initTime != null && dataToshow != null){
+      final Duration duration = DateTime.now().difference(DateTime.parse(initTime));
+      final double idealCantPoint = duration.inSeconds/5;
+      final double percentPoint = (pointCount) / idealCantPoint;
+      // final double percentPoint = dataToshow / idealCantPoint;
+      final String? finaName = await PrincipalDB.getPredictionsGridName();
+      print('3error---->---> $finaName');
+      print('PERCENT---->>> Percent: $percentPoint idealCantPoint: $idealCantPoint actual cantPoint $pointCount DataToSHOW $dataToshow');
+      if(percentPoint <= 1 && percentPoint >= 0){
+        add(UpdateDataPercentEvent(percent: percentPoint));
+        
+      }
+      if(idealCantPoint > limitPoints){
+        await postTrackingPoints();
+        print('END---->>> 3 BEFORE  getInternalTrackingEnd ');
+        await getPostInternalTrackingEnd().then((value) async {
+          print('END---->>> 44444 innn  getInternalTrackingEnd ');
+          await stopNavigation();
+          if(locationBloc.state.isInBackground){
+            getOutOfApp();
+          }
+        });
+      }
+      // else{
+
+      // }
+    }
     if(lastTimeSend != null){
       final Duration duration = DateTime.now().difference(DateTime.parse(lastTimeSend));
       if(duration.inMinutes > 1){
+        print('PERCENT--------------SEND DATA------------------------');
         postTrackingPoints();
       }
     }
@@ -588,7 +803,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
 // [{air_quality: Mala, color: 0xFFF6C244, distance: 0, end_street_name: Calle end, 
 //exposure: 25.2, start_street_name: Calle start, total_time: 0}]
 
-    Future<bool> getInternalTrackingEnd() async{
+    Future<bool> getPostInternalTrackingEnd() async{
       bool response = false;
       final token = await PrincipalDB.getFirebaseToken();
       final routeID = await PrincipalDB.getNavigationID();
@@ -607,7 +822,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
           add(EndingEvent(resp3));
           print('..................Will show.....................');
           print(state.navigationDataToShowTracking);
-          add(StopNavigationEvent());
+          // add(StopNavigationEvent());
           // backgroundLocationRepository.stopForegroundService();
           KeepScreenOn.turnOff();
           service.closeNotification();
@@ -737,13 +952,17 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       idToken: token,
       ); 
 
-    print('getRouteWithPrediction is values ${resp6.values}');
+    print('Min distanceX getRouteWithPrediction is values ${resp6.values}');
     print('getRouteWithPrediction is keys ${resp6.keys}');
     if(resp6['error'] == null){
         final latLngList = resp6['points'].map((coors) => LatLng(coors[1], coors[0])).toList();
         final List<LatLng> points = latLngList.cast<LatLng>();
+        final instructionsList = resp6['instructions'].map((instructions) => InstructionsModel.fromMap(instructions)).toList();
+        final List<InstructionsModel> instructions = instructionsList.cast<InstructionsModel>();
         print('Routing destiny is points: ${points.length}');
-
+        print('Routing destiny is points: $points');
+        print('Routing destiny instructions: $instructions');
+      add(AddNavigationInstructions(instructions));
       locationBloc.add(AddMyRoute(points));  
       response = true;
     } else if(resp6['error'] != null){
@@ -800,12 +1019,168 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     }
     return response;
   }
+
+
+
+  Future<bool> putNavigationPreferences() async{
+    bool response = false;
+    final token = await PrincipalDB.getFirebaseToken(); 
+    print('preferences--->> state.navigationAirQualityPref ${state.navigationAirQualityPref}');
+    print('preferences--->> state.navigationProfile ${state.navigationProfile}');
+    final resp6 =  await navigationService.putNavigationPreferences(
+      idToken: token,
+      navigationAirQualityPref: state.navigationAirQualityPref,
+      profile: state.navigationProfile
+      ); 
+
+    if(resp6['error'] == null && resp6['status'] == 200){ 
+      response = true;
+    } else if(resp6['error'] != null){
+      print('getPlacePreferencesLikeScore THE ERROR ISSS  ---${resp6["error"]}');
+    } 
+    return response;
+  }
+
+
+  Future<Map<String,dynamic>> getNavigationPreferencesAndFavoriteDestinations() async{
+    final navPrefer = await getNavigationPreferences();
+    final favDestini = await getFavoriteDestinations();
+    return {
+      'pref' : navPrefer,
+      'fav' : favDestini,
+    };
+  }
+
+
+
+  Future<bool> getNavigationPreferences() async{
+    bool response = false;
+    final token = await PrincipalDB.getFirebaseToken(); 
+
+    final resp6 =  await navigationService.getNavigationPreferences(
+      idToken: token,
+      ); 
+
+    if(resp6['error'] == null){ 
+      print('preference----> yyyy ${resp6.keys}');
+      print('preference----> yyyy ${resp6.values}');
+      final String profile = resp6['preferred_profile'];
+      final String param = resp6['route_calculation_parameter'];
+      if(param == 'time'){
+        add(TimeNavigationAirQualityPreferencesEvent());
+        await Preferences.setUserAirQualityPref(2);
+      } else if (param == 'pollutant') {
+        add(PollutantNavigationAirQualityPreferencesEvent());
+        await Preferences.setUserAirQualityPref(1);
+      }
+      if(profile == 'walking'){
+        add(WalkingNavigationProfileEvent());
+        await Preferences.setUserCiclistPeaton(1);
+      } else if (profile == 'cycling') {
+        add(CyclingNavigationProfileEvent());
+        await Preferences.setUserCiclistPeaton(2);
+      }
+
+      response = true;
+    } else if(resp6['error'] != null){
+      print('preference----> getNavigationPreferences THE ERROR ISSS  ---${resp6["error"]}');
+    } 
+    return response;
+  }
+  Future<bool> getFavoriteDestinations() async{
+    bool response = false;
+    final token = await PrincipalDB.getFirebaseToken(); 
+
+    final resp6 =  await navigationService.getFavoriteDestinations(
+      idToken: token,
+      ); 
+
+    if(resp6['error'] == null){ 
+      print('preference----> xxxx${resp6.keys}');
+      print('preference----> xxxx${resp6.values}');
+      final List<Map<String, dynamic>> favoriteRoutes = resp6['response'].cast<Map<String,dynamic>>();
+      final List<FavoritePlacesModel> favPlacesNew = [];
+      favoriteRoutes.forEach((element) async {
+        final FavoritePlacesModel favPlace = FavoritePlacesModel.fromMap(element);
+        favPlacesNew.add(favPlace);
+        await PrincipalDB.insertFavoritePlace(favPlace);
+      },);
+      add(AddUpdateFavoritePlacesDataEvent(favPlacesNew));
+      print('preference----> ....... $favoriteRoutes');
+      response = true;
+    } else if(resp6['error'] != null){
+      print('preference--->> getFavoriteDestinations THE ERROR ISSS  ---${resp6["error"]}');
+    } 
+    return response;
+  }
+  Future<String> postFavoriteDestinations({
+    required String tag,
+    required String streetName,
+    required LatLng coordinates
+  }) async{
+    String response = '';
+    
+    final token = await PrincipalDB.getFirebaseToken(); 
+
+    final resp6 =  await navigationService.postFavoriteDestinations(
+      idToken: token,
+      streetName: streetName,
+      coordinates: coordinates,
+      tag: tag,
+      ); 
+
+    if(resp6['error'] == null){ 
+      print('preference----> xxxx${resp6.keys}');
+      print('preference----> yyyyy${resp6.values}');
+      response = resp6['response']['id'] ?? ''; // must be the token
+    } else if(resp6['error'] != null){
+      print('getPlacePreferencesLikeScore THE ERROR ISSS  ---${resp6["error"]}');
+    } 
+    return response;
+  }
+
+
+  Future<String> deleteFavoriteDestination({
+    required String favoriteDestinyID,
+  }) async{
+    String response = '';
+    
+    final token = await PrincipalDB.getFirebaseToken(); 
+
+    final resp6 =  await navigationService.deleteFavoriteDestination(
+      idToken: token,
+      favoriteDestinyID: favoriteDestinyID
+      ); 
+
+    if(resp6['error'] == null){ 
+      print('preference----> xxxx${resp6.keys}');
+      print('preference----> yyyyy${resp6.values}');
+      await PrincipalDB.deleteAllFavoritePlace();
+      await getFavoriteDestinations();
+    } else if(resp6['error'] != null){
+      print('getPlacePreferencesLikeScore THE ERROR ISSS  ---${resp6["error"]}');
+    } 
+    return response;
+  }
+
+
+
+
+
+
+
+
+
+
+
   @override
   Future<void> close() {
     // TODO: implement close
     // backgroundLocationRepository.stopForegroundService();
     return super.close();
   }
+
+  
 
 
 }

@@ -24,6 +24,15 @@ class RestorePasswordScreen extends StatefulWidget {
 class _RestorePasswordScreenState extends State<RestorePasswordScreen> {
   late StreamSubscription<bool> keyboardSubscription;
   bool keyboardState = false;
+  String  msg = '';
+  bool  isSent = false;
+  void displayDialog(){
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+       builder: (context) =>  const AlertEmailRecoverScreen()
+       );
+  }
   @override
   void initState() {
     super.initState();
@@ -53,132 +62,142 @@ class _RestorePasswordScreenState extends State<RestorePasswordScreen> {
     final recoverForm = Provider.of<AuthFormProvider>(context);
     return Scaffold(
             appBar: AppBar(
+              title:
+                   BrandingLima(width: 250),
+              
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   mainAxisSize: MainAxisSize.min,
+              //   children: const <Widget>[
+              //      BrandingLima(width: 250),
+              //   ],
+              // ), 
               automaticallyImplyLeading: recoverForm.isLoading ? false : true,
+              actions: const [SizedBox(width: 55,)],
             ),
             body: 
             FadeInRight(
               child: Container(
                 color: AppTheme.white,
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: areaScreen.width * 0.05),
-                  child: Stack(
-                    // alignment: AlignmentDirectional.topEnd,
-                    children: [
-                      Container(
-                        height: double.infinity,
-                        width: double.infinity,
-                        color: AppTheme.white,
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: areaScreen.height * 0.0,
+                padding: EdgeInsets.symmetric(horizontal: areaScreen.width * 0.05),
+                child: Stack(
+                  // alignment: AlignmentDirectional.topEnd,
+                  children: [
+                    Container(
+                      height: double.infinity,
+                      width: double.infinity,
+                      color: AppTheme.white,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: areaScreen.height * 0.0,
+                          ),
+                          Container(
+                            color: AppTheme.white,
+                            height: areaScreen.height * 0.15,
+                            width: double.infinity,
+                            child: WelcomeText(
+                              hightSize: areaScreen.height,
+                              welcomeText: '¡Hola!',
+                              descriptionText: 'Ingresa tu correo para recuperar tu cuenta.',
                             ),
-                            Container(
-                              color: AppTheme.white,
-                              height: areaScreen.height * 0.15,
-                              width: double.infinity,
-                              child: WelcomeText(
-                                hightSize: areaScreen.height,
-                                welcomeText: '¡Hola!',
-                                descriptionText: 'Ingresa tu correo para recuperar tu cuenta.',
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      
-                      SingleChildScrollView(
+                    ),
+                    
+                    SingleChildScrollView(
             
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    SizedBox(
-                                      // color: AppTheme.red,
-                                      height: areaScreen.height * 0.15,
-                                    ),
-                                    // FORM -------------
-                                    Container(
-                                      // height: areaScreen.height * 0.504,
-                                      color: AppTheme.white,
-                                      width: double.infinity,
-                                      child: Form(
-                                        key: recoverForm.formKeyRestorPass,
-                                        autovalidateMode:
-                                            AutovalidateMode.onUserInteraction,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            
-                                            TextFormField(
-                                              onChanged: (value) =>
-                                                  recoverForm.userEmail = value,
-                                              readOnly: recoverForm.isLoading
-                                                  ? true
-                                                  : false,
-                                              autocorrect: false,
-                                              keyboardType:
-                                                  TextInputType.emailAddress,
-                                              style: const TextStyle(
-                                                  color: Colors.deepPurple),
-                                              decoration: InputDecotations
-                                                  .authInputDecoration(
-                                                labelText: 'Correo electrónico',
-                                                hintText: 'enamil@ext.com',
-                                                // prefixIcon: Icons.alternate_email_outlined
-                                              ),
-                                              validator: (value) {
-                                                return InternalValidations
-                                                        .emailValidator(value)
-                                                    ? null
-                                                    : 'Correo inválido';
-                                              },
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    // color: AppTheme.red,
+                                    height: areaScreen.height * 0.15,
+                                  ),
+                                  // FORM -------------
+                                  Container(
+                                    // height: areaScreen.height * 0.504,
+                                    color: AppTheme.white,
+                                    width: double.infinity,
+                                    child: Form(
+                                      key: recoverForm.formKeyRestorPass,
+                                      autovalidateMode:
+                                          AutovalidateMode.onUserInteraction,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          
+                                          TextFormField(
+                                            onChanged: (value) =>
+                                                recoverForm.userEmail = value,
+                                            readOnly: recoverForm.isLoading
+                                                ? true
+                                                : false,
+                                            autocorrect: false,
+                                            keyboardType:
+                                                TextInputType.emailAddress,
+                                            style: const TextStyle(
+                                                color: AppTheme.blue),
+                                            decoration: InputDecotations
+                                                .authInputDecoration(
+                                              labelText: 'Correo electrónico',
+                                              hintText: 'enamil@ext.com',
+                                              // prefixIcon: Icons.alternate_email_outlined
                                             ),
-                                            
-                                            SizedBox(
-                                              height: areaScreen.height * 0.01,
-                                            ),
-                                            
-                                          ],
-                                        ),
+                                            validator: (value) {
+                                              return InternalValidations
+                                                      .emailValidator(value)
+                                                  ? null
+                                                  : 'Correo inválido';
+                                            },
+                                          ),
+                                          
+                                          SizedBox(
+                                            height: areaScreen.height * 0.01,
+                                          ),
+                                          
+                                        ],
                                       ),
                                     ),
-                                    
-                                    const SizedBox(
-                                      height: 50,
-                                    ),
-                                    // LOGO AND BUTTOM --------
-                                    const BrandingLima(width: 350, center: false,),
-                                    const SizedBox(
-                                      height: 30,
-                                    ),
-                                    // LOGO AND BUTTOM --------
+                                  ),
+                                  Text(msg,style: const TextStyle(color: AppTheme.red),),
+                                  
+                                  const SizedBox(
+                                    height: 50,
+                                  ),
+                                  // LOGO AND BUTTOM --------
+                                  const BrandingLima(width: 350, center: false,),
+                                  const SizedBox(
+                                    height: 30,
+                                  ),
+                                  // LOGO AND BUTTOM --------
 
-                                    // const BrandingQaira(width: 500,),
-                                    // SizedBox(
-                                    //   // color: AppTheme.red,
-                                    //   height: areaScreen.height * 0.15,
-                                    // ),
-                                    // LOGO AND BUTTOM --------
-                                                          
-                                  ],
-                                ),
-                                
-                            
-                          ),
-                        recoverForm.isLoading? 
-                      LoadingAlert(screenSize: areaScreen)
-                      : Container(),
-                    ],
-                  ),
+                                  // const BrandingQaira(width: 500,),
+                                  // SizedBox(
+                                  //   // color: AppTheme.red,
+                                  //   height: areaScreen.height * 0.15,
+                                  // ),
+                                  // LOGO AND BUTTOM --------
+                                                  
+                                ],
+                              ),
+                              
+                          
+                        ),
+                      recoverForm.isLoading? 
+                    LoadingAlert(screenSize: areaScreen)
+                    : Container(),
+
+                  ],
                 ),
               ),
             ),
             floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-            floatingActionButton: keyboardState ? null : FadeInUp(
+            floatingActionButton: keyboardState || isSent ? null : FadeInUp(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: areaScreen.width * 0.05),
                 child: MaterialButton(
@@ -192,6 +211,14 @@ class _RestorePasswordScreenState extends State<RestorePasswordScreen> {
                             final authService = Provider.of<AuthService>(context, listen: false);
                             // await Future.delayed(Duration(seconds: 2));
                             final String? resetPassword = await authService.resetPassword(recoverForm.userEmail);
+                            if(resetPassword == null){
+                              setState(() {
+                                msg = 'Verificar su conexión de Internet';
+                              });
+                            } else{
+                              displayDialog();
+                            }
+                            print('4pass----->$resetPassword');
                             // await Future.delayed(Duration(seconds: 5));
                             recoverForm.isLoading = false;
                           },

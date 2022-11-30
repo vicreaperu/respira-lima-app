@@ -20,6 +20,7 @@ class NotHasValidAccountEvent extends AuthEvent{}
 class IsAguestEvent extends AuthEvent{}
 class IsNotAguestEvent extends AuthEvent{}
 
+
 class StartUpdatingAccountEvent extends AuthEvent{}
 class SetIsUpdating extends AuthEvent{}
 class StopUpdatingAccountEvent extends AuthEvent{}

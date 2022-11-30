@@ -25,12 +25,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigateToHome() async {
-    await Future.delayed(Duration(milliseconds: 1500), () {});
+    await Future.delayed(const Duration(milliseconds: 1500), () {
     // if (!state.hasAccount) {
     if (!Preferences.isFirstTime) {
       print('To init splash ${Preferences.isFirstTime}');
       Navigator.pushReplacementNamed(context, LoadingInitialScreen.pageRoute);
     }
+
+    });
   }
 
   @override
@@ -72,7 +74,7 @@ class _WelcomeButton extends StatelessWidget {
         children: [
           MaterialButton(
             onPressed: () {
-              Navigator.pushReplacementNamed(
+              Navigator.pushNamed(
                   context, LoadingInitialScreen.pageRoute);
             },
             color: AppTheme.primaryAqua,
@@ -159,10 +161,24 @@ class _WelcomeButton extends StatelessWidget {
               final authService =
                   Provider.of<AuthService>(context, listen: false);
               await authService.askForTokenUpdating().then((isToken) async {
-                if(!isToken){
+                print('HEREEEEEEEE!!!!!!!!!...0...!!!!!!!!!!!!!///////////');
+                if(isToken){
+                  print('HEREEEEEEEE!!!!!!!!!...UPDATED OK..!!!!!!!!!!!!!///////////');
+                  Preferences.isAguest = true;
+                  // final String token = 'asasa'; // TODO: REMOVE THIS
+                  print('ISSSS A GUEST ON LOG IN SCREEN<<<<<<----');
+                  final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
+                  authBloc.add(HasAccountAsGuestEvent());
+                  Navigator.pushReplacementNamed(context, OnboardingScreen.pageRoute);
+
+                } else{
+                  print('HEREEEEEEEE!!!!!!!!!...1...!!!!!!!!!!!!!///////////');
                   await authService.loginFirebaseAnonymous().then((token) async {
+                    print('HEREEEEEEEE!!!!!!!!!...2...!!!!!!!!!!!!!///////////');
                     if (token != '') {
+                      print('HEREEEEEEEE!!!!!!!!!...3...!!!!!!!!!!!!!///////////');
                       await PrincipalDB.firebaseToken(token).then((value) {
+                        print('HEREEEEEEEE!!!!!!!!!...4...!!!!!!!!!!!!!///////////');
                         Preferences.isAguest = true;
                         // final String token = 'asasa'; // TODO: REMOVE THIS
                         print('ISSSS A GUEST ON LOG IN SCREEN<<<<<<----');
@@ -173,10 +189,11 @@ class _WelcomeButton extends StatelessWidget {
                       });
                       // Preferences.firebaseToken = token;
                     } else {
+                      print('HERREE 222--------');
                       return;
                     }
-
                   });
+
                 }
                 // Navigator.pushReplacementNamed(context, LoadingInitialScreen.pageRoute);
                 

@@ -1,6 +1,5 @@
 import 'package:app4/blocs/blocs.dart';
 import 'package:app4/themes/themes.dart';
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -92,7 +91,7 @@ class PlaceAlertInformation extends StatelessWidget {
                                   itemCount: 1,
                                   initialRating: navigationBloc.state.locationLiked ? 1 : 0,
                                   itemBuilder: (context, _) =>
-                                      const Icon(EvaIcons.heart, color: Colors.green),
+                                      const Icon(Icons.favorite, color: Colors.green),
                                       // const CircleAvatar(backgroundColor: AppTheme.gray10,child: Icon(EvaIcons.heart, color: Colors.green),),
                                   glowColor: Colors.green,
                                   unratedColor: AppTheme.gray30,

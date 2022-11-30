@@ -1,6 +1,5 @@
 part of 'gps_bloc.dart';
 
-@immutable
 abstract class GpsEvent {
   const GpsEvent();
 }

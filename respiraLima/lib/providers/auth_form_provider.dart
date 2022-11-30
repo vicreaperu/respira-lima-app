@@ -15,7 +15,14 @@ class AuthFormProvider extends ChangeNotifier{
   bool isDark = false;
   bool _isLoading = false;
   bool _isCompleted = false;
+  bool _isDataOk = true;
 
+  bool get isDataOk => _isDataOk;
+  set isDataOk(bool value) {
+    _isDataOk = value;
+    notifyListeners();
+  }
+  
   bool get isCompleted => _isCompleted;
   set isCompleted(bool value) {
     _isCompleted = value;

@@ -27,7 +27,7 @@ class RouteService extends ChangeNotifier {
       "instructions": true,
 
     };
-    final url = Uri.https(Environment.baseUrl, '${Environment.unEncodedPathRoute}/compute');
+    final url = Uri.https(Environment.baseUrl, Environment.unEncodedPathRoute);
     try{
       final resp = await http.post(url, headers: head, body: json.encode(authData));
 
@@ -65,7 +65,7 @@ class RouteService extends ChangeNotifier {
 
     };
     print('getRouteWithPrediction $authData');
-    final url = Uri.https(Environment.baseUrl, '${Environment.unEncodedPathRoute}/compute');
+    final url = Uri.https(Environment.baseUrl, Environment.unEncodedPathRoute);
     try{
       final resp = await http.post(url, headers: head, body: json.encode(authData));
 
@@ -73,7 +73,7 @@ class RouteService extends ChangeNotifier {
       
       final Map<String, dynamic> decodedResp = json.decode(resp.body);
       print('Routing data, body: ${resp.body} ');
-      print('Routing data, body: $decodedResp');
+      print('Routing data, decoded: $decodedResp');
       if (decodedResp['status'] == 200) {
         return decodedResp['response'];
       }

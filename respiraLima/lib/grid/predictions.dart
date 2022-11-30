@@ -44,6 +44,8 @@ class NavigationPredictions {
 
     if (data.isNotEmpty)
     {
+      data['i'] = i;
+      data['j'] = j;
       return data; 
       // return data['PM25']; 
     }

@@ -7,8 +7,10 @@ int get_index_for_data_grid_with_predictions(
   int indexValue;
   if (centroidValue == minValue)
     indexValue = 1;
-  else
-    indexValue = (centroidValue - minValue) ~/ offsetValue;
+  else {
+    indexValue = ((centroidValue - minValue) / offsetValue).ceil();
+  }
+
 
   return indexValue;
 }
@@ -46,11 +48,11 @@ Future<Map<String, dynamic>> getDataGridPredictionsUsingIndexes(
     String key = "($i, $j)";
 
     final predict = await PrincipalDB.findPredictionFromGridByGridId(key);
-    print('mikel resp FROM KYE IS ------> $key');
+    print('3error-----> $key');
     print('mikel resp FROM DB   ------> $predict');
     print('mikel resp FROM DB  is empty?? ------> ${predict.isEmpty}');
     if(predict.isNotEmpty){
-      return predict[0].toMap() ;
+      dataGridInformation = predict[0].toMap() ;
     } 
 
       //   if (data_grid_with_predictions.containsKey(key))
@@ -59,8 +61,9 @@ Future<Map<String, dynamic>> getDataGridPredictionsUsingIndexes(
 
       // return data_grid_information;
 
-  } 
-  dataGridInformation = {'error':666, 'type': 'OUT OF AREA'};
+  } else {
+    dataGridInformation = {'error':666, 'type': 'OUT OF AREA'};
+  }
   return dataGridInformation;
   
 }

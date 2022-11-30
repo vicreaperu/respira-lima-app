@@ -1,5 +1,3 @@
-
-import 'package:app4/screens/map_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationApi {
@@ -32,6 +30,7 @@ class NotificationApi {
       autoCancel: autoCancel,
       indeterminate: indeterminate,
       ongoing: ongoin,
+      icon: 'ic_stat_bid_place',
       );
     const IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
     return  NotificationDetails(android: androidNotificationDetails, iOS: iosNotificationDetails);

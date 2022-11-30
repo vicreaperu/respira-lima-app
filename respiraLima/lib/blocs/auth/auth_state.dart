@@ -25,20 +25,20 @@ class AuthState extends Equatable {
     bool? hasValidAccound,
     DateTime? initialDate,
   }) => AuthState(
-      isAGuest         : isAGuest        ?? this.isAGuest ,
+      hasValidAccound  : hasValidAccound ?? this.hasValidAccound,
       startUpdating    : startUpdating   ?? this.startUpdating,
       isValidToke      : isValidToke     ?? this.isValidToke,
       initialDate      : initialDate     ?? this.initialDate,
       hasAccount       : hasAccount      ?? this.hasAccount,
-      hasValidAccound  : hasValidAccound ?? this.hasValidAccound,
+      isAGuest         : isAGuest        ?? this.isAGuest ,
   );
   @override
   List<Object> get props => [
-    isAGuest,
+    hasValidAccound,
     startUpdating,
     isValidToke,
     initialDate,
     hasAccount,
-    hasValidAccound,
+    isAGuest,
     ];
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:app4/models/links_model.dart';
 import 'package:app4/models/models.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -14,15 +15,23 @@ class PrincipalDB {
 
 
   // dynamically typed store
-  static final store = StoreRef.main();
+  static var store = StoreRef.main();
   static late final String dbPath;
   static late final Directory appDocDirectory;
   static late final DatabaseFactory dbFactory;
-  static late final Database _db;
+  static late  Database _db;
   static const String pointsToSendStoreName = 'pointsToSend';
   static const String predictionsGridStoreName = 'predictionsGrid';
+  static const String frequentQustionsStoreName = 'questionsTable';
+  static const String interestLinksStoreName = 'interestLinksTable';
+  static const String learnMoreStoreName = 'learnMoreTable';
+  static const String favoritePlacesStoreName = 'favoritePlacesTable';
   static late final StoreRef<int, Map<String, Object?>> _pointsToSendStore;
   static late final StoreRef<int, Map<String, Object?>> _predictionsGridStore;
+  static late final StoreRef<int, Map<String, Object?>> _frequentQuestionsStore;
+  static late final StoreRef<int, Map<String, Object?>> _interestLinksStore;
+  static late final StoreRef<int, Map<String, Object?>> _learnMoreStore; 
+  static late final StoreRef<int, Map<String, Object?>> _favoritePlacesStore; 
 
 
  static Future<String> createFolder(String cow) async {
@@ -51,11 +60,11 @@ class PrincipalDB {
     //   // File path to a file in the current directory
     // dbPath = '${appDocDirectory.path}/dibAPP.db';
     // dbPath = await createFolder('dibAPP.db');
-    final appDocDirectory = (Platform.isAndroid ? await getExternalStorageDirectory() : await getApplicationDocumentsDirectory())!;
+    appDocDirectory = (Platform.isAndroid ? await getExternalStorageDirectory() : await getApplicationDocumentsDirectory())!;
 
     // final appDocDirectory = await getApplicationDocumentsDirectory();
     // dbPath = '${appDocDirectory.path}/dibAPP.db';
-    final dbPath = join(appDocDirectory.path, 'demo.db');
+    dbPath = join(appDocDirectory.path, 'demo.db');
     print(dbPath);
     print('iinit db 3');
     dbFactory = databaseFactoryIo;
@@ -67,11 +76,36 @@ class PrincipalDB {
     print('iinit db 6');
     _pointsToSendStore = intMapStoreFactory.store(pointsToSendStoreName);
     print('iinit db 7');
+    _frequentQuestionsStore = intMapStoreFactory.store(frequentQustionsStoreName);
+    print('iinit db 8');
+    _interestLinksStore = intMapStoreFactory.store(interestLinksStoreName);
+    print('iinit db 9');
+    _learnMoreStore = intMapStoreFactory.store(learnMoreStoreName);
+    print('iinit db 10');
+    _favoritePlacesStore = intMapStoreFactory.store(favoritePlacesStoreName);
+    print('iinit db 11');
+  }
+  static Future reopenDB() async {
+    // _db.close();
+    store = StoreRef.main();
+    _db.close();
+    _db = await dbFactory.openDatabase(dbPath);
+  //  await init();
   }
 
 
 
-
+  static Future saveProfilePicturePath(String value) async{ // ALSO SAVE THE TIME
+    await store.record('profilePicturePath').put(_db, value);
+  }
+  static Future<String?> getProfilePicturePath() async{
+    final path = await store.record('profilePicturePath').get(_db) as String?;
+    if(path != null){
+      return path;
+    } else {
+      return null;
+    }
+  }
 
 
 
@@ -94,11 +128,14 @@ class PrincipalDB {
 
   static Future<bool> clearUserInfo() async{
     try{
+      
       await navigationID('');
       // await timeFirebaseTokenUpdated(''); 
       // await firebaseToken(''); 
       await store.record('firebaseToken').delete(_db); 
       await store.record('timeFirebaseTokenUpdated').delete(_db); 
+      await store.record('profilePicturePath').delete(_db); 
+      await deleteAllFavoritePlace();
       return true;
     } on Exception catch (e){
       return false;
@@ -137,6 +174,21 @@ class PrincipalDB {
       return id;
     } else{
       return '';
+    }
+  }
+  
+
+  // static String _navigationState = 0;
+  static Future navigationState(int value) async {
+    await store.record('navigationState').put(_db, value);
+    // _navigationState = value;
+  }
+  static Future<int> getNavigationState() async{
+    final state = await store.record('navigationState').get(_db) as int?;
+    if(state != null){
+      return state;
+    } else{
+      return 0;
     }
   }
   
@@ -201,6 +253,7 @@ class PrincipalDB {
     // _navigationCountPoint = value;
   }
   static Future<double> getNavigationAcumulatedDistance() async{
+    
     final count = await store.record('navigationAcumulatedDistance').get(_db) as double?;
     if(count != null){
       return count;
@@ -240,6 +293,13 @@ class PrincipalDB {
   static Future<String?> getNavigationLastKnowTime() async{
     return await store.record('navigationLastKnowTime').get(_db) as String?;
   }
+  static Future navigationInitTime(String value) async{
+    await store.record('navigationInitTime').put(_db, value);
+    // _navigationLastKnowTime = value;
+  }
+  static Future<String?> getNavigationInitTime() async{
+    return await store.record('navigationInitTime').get(_db) as String?;
+  }
 
   // static String _navigationInitialInformation = '';
   static Future navigationInitialInformation(Map<String,dynamic> reportMap) async{
@@ -272,9 +332,13 @@ class PrincipalDB {
 
   static Future clearNavigationDetail()async {
     await store.record('navigationLastKnowTime').put(_db, ''); 
+    await store.record('navigationInitTime').put(_db, ''); 
     await store.record('navigationCountPoint').delete(_db); 
     await store.record('navigationInitialInformation').delete(_db); 
     await store.record('navigationLastKnownInformation').delete(_db); 
+    
+
+
 
 
     await store.record('navigationAcumulatedPM25').delete(_db); 
@@ -283,6 +347,8 @@ class PrincipalDB {
 
     await store.record('startNavigationDetails').delete(_db);
     await store.record('navigationID').delete(_db);
+    await store.record('navigationState').delete(_db);
+    
     await deleteAllPoints();
   }
 
@@ -305,7 +371,7 @@ class PrincipalDB {
     await _pointsToSendStore.record(id).put(_db, pointModel.toMap());
   }
 
-  static Future<int?> countAllPoints() async {
+  static Future<int> countAllPoints() async {
     final value = await _pointsToSendStore.count(_db);
     return value;
   }
@@ -334,7 +400,8 @@ class PrincipalDB {
     final gridModel = PointModel.fromMap(snapshot.value);
     // An ID is a key of a record from the database.
     gridModel.id = snapshot.key;
-    return gridModel.toMapToSend();
+    return gridModel.toMapToSendNew();
+    // return gridModel.toMapToSend();
   }).toList();
 }
 
@@ -419,6 +486,39 @@ class PrincipalDB {
   static Future<String?> getPredictionsGridTimeUpdated() async{
     return await store.record('predictionsGridTimeUpdated').get(_db) as String?;
   }
+  static Future predictionsGridDeadTime(String value) async  {
+    await store.record('predictionsGridDeadTime').put(_db, value);
+    // _predictionsGridDeadTime = value;
+  }
+  static Future<String?> getPredictionsGridDeadTime() async{
+    return await store.record('predictionsGridDeadTime').get(_db) as String?;
+  }
+  static Future predictionsGridName(String value) async  {
+    await store.record('predictionsGridName').put(_db, value);
+    try{
+      final forGridName =  value.split('.').first.split("_");
+      final String name = forGridName.sublist(forGridName.length -2).join('-');
+      await predictionsGridTimeName(name);
+    } on Exception catch (e){
+      await predictionsGridTimeName('2022-03-03-03-03-03');
+    }
+    // _predictionsGridName = value;
+  }
+  static Future<String?> getPredictionsGridName() async{
+    return await store.record('predictionsGridName').get(_db) as String?;
+  }
+  static Future predictionsGridTimeName(String value) async  {
+    await store.record('predictionsGridTimeName').put(_db, value);
+    // _predictionsGridTimeName = value;
+  }
+  static Future<String> getPredictionsGridTimeName() async{
+    final name = await store.record('predictionsGridTimeName').get(_db) as String?;
+    if(name !=null){
+      return name;
+    } else{
+      return '2022-02-02-02-02-02';
+    }
+  }
 
   static Future insertPredictionValueFromGrid(GridModel gridModel) async {
     await _predictionsGridStore.add(_db, gridModel.toMap());
@@ -434,15 +534,16 @@ class PrincipalDB {
 
 
   static Future<int?> deleteAllPredictionGrid() async {
+    int? valReturn;
     final finder = Finder(sortOrders: [SortOrder('grid_id'),]);
       await _predictionsGridStore.delete(
       _db,
       finder: finder,
     ).then((value) {
-      print('DB Pred ---- DELETED CANT $value');
-      return value;
+      print('Gridx----> DB Pred ---- DELETED CANT $value');
+      valReturn = value;
     });
-    return null;
+    return valReturn;
   }
 
 
@@ -483,7 +584,242 @@ class PrincipalDB {
   }
 
 
+//////////// . POLITICS AND TERMS
 
+static Future politicsAndTerms(String value) async  {
+  await store.record('politicsAndTerms').put(_db, value);
+}
+static Future<String?> getPoliticsAndTerms() async{
+  return await store.record('politicsAndTerms').get(_db) as String?;
+}
+
+
+
+
+
+
+
+
+///////////// INSTERESTS LINKS
+  static Future insertUpdateInterestLinksWithCustomID(LinkModel interestLink, int id) async {
+    await _interestLinksStore.record(id).put(_db, interestLink.toMap());
+  }
+
+  static Future<int> countAllInterestLinks() async {
+    final val = await _interestLinksStore.count(_db);
+    return val;
+  }
+
+  static Future<int?> deleteAllInterestLinks() async {
+    int? valReturn;
+    final finder = Finder(sortOrders: [SortOrder('name'),]);
+      await _interestLinksStore.delete(
+      _db,
+      finder: finder,
+    ).then((value) {
+      print('InterestLinks----> DB Pred ---- DELETED CANT $value');
+      valReturn = value;
+    });
+    return valReturn;
+  }
+
+  static Future<List<QuestionModel>> getAllInterestLinks() async {
+    // Finder object can also sort data.
+    final finder = Finder(sortOrders: [
+      SortOrder('name'),
+    ]);
+
+    final recordSnapshots = await _interestLinksStore.find(
+      _db,
+      finder: finder,
+    );
+
+    // Making a List<positionReport> out of List<RecordSnapshot>
+    return recordSnapshots.map((snapshot) {
+      final gridModel = QuestionModel.fromMap(snapshot.value);
+      // An ID is a key of a record from the database.
+      gridModel.id = snapshot.key;
+      return gridModel;
+    }).toList();
+  }
+
+
+
+///////////// LEARN MORE
+  static Future insertUpdateLearnMoreWithCustomID(LinkModel interestLink, int id) async {
+    await _learnMoreStore.record(id).put(_db, interestLink.toMap());
+  }
+
+  static Future<int> countAllLearnMore() async {
+    final val = await _learnMoreStore.count(_db);
+    return val;
+  }
+
+  static Future<int?> deleteAllLearnMore() async {
+    int? valReturn;
+    final finder = Finder(sortOrders: [SortOrder('name'),]);
+      await _learnMoreStore.delete(
+      _db,
+      finder: finder,
+    ).then((value) {
+      print('LearnMore----> DB Pred ---- DELETED CANT $value');
+      valReturn = value;
+    });
+    return valReturn;
+  }
+
+  static Future<List<QuestionModel>> getAllLearnMore() async {
+    // Finder object can also sort data.
+    final finder = Finder(sortOrders: [
+      SortOrder('name'),
+    ]);
+
+    final recordSnapshots = await _learnMoreStore.find(
+      _db,
+      finder: finder,
+    );
+
+    // Making a List<positionReport> out of List<RecordSnapshot>
+    return recordSnapshots.map((snapshot) {
+      final gridModel = QuestionModel.fromMap(snapshot.value);
+      // An ID is a key of a record from the database.
+      gridModel.id = snapshot.key;
+      return gridModel;
+    }).toList();
+  }
+
+
+
+
+
+
+
+
+
+
+
+///////////// FAVORITE PLACES
+  static Future insertFavoritePlace(FavoritePlacesModel favoritePlace) async {
+    await _favoritePlacesStore.add(_db, favoritePlace.toMap());
+  }
+
+  static Future<int> countAllFavoritePlace() async {
+    final val = await _favoritePlacesStore.count(_db);
+    return val;
+  }
+
+  static Future<int?> deleteAllFavoritePlace() async {
+    int? valReturn;
+    final finder = Finder(sortOrders: [SortOrder('latitude'),]);
+      await _favoritePlacesStore.delete(
+      _db,
+      finder: finder,
+    ).then((value) {
+      print('FavoritePlace----> DB Pred ---- DELETED CANT $value');
+      valReturn = value;
+    });
+    return valReturn;
+  }
+
+
+  static Future<List<FavoritePlacesModel>> getAllFavoritePlace() async {
+    // Finder object can also sort data.
+    final finder = Finder(sortOrders: [
+      SortOrder('street_name'),
+    ]);
+
+    final recordSnapshots = await _favoritePlacesStore.find(
+      _db,
+      finder: finder,
+    );
+
+    // Making a List<positionReport> out of List<RecordSnapshot>
+    return recordSnapshots.map((snapshot) {
+      final gridModel = FavoritePlacesModel.fromMap(snapshot.value);
+      // An ID is a key of a record from the database.
+      gridModel.id = snapshot.key;
+      return gridModel;
+    }).toList();
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////// FREQUENT QUESTIONS
+  static Future insertUpdateFrequentQuestionsWithCustomID(QuestionModel questionModel, int id) async {
+    await _frequentQuestionsStore.record(id).put(_db, questionModel.toMap());
+  }
+
+  static Future<int> countAllFrequentQuestions() async {
+    final val = await _frequentQuestionsStore.count(_db);
+    return val;
+  }
+
+
+  static Future<int?> deleteAllFrequentQuestions() async {
+    int? valReturn;
+    final finder = Finder(sortOrders: [SortOrder('question'),]);
+      await _frequentQuestionsStore.delete(
+      _db,
+      finder: finder,
+    ).then((value) {
+      print('questions----> DB Pred ---- DELETED CANT $value');
+      valReturn = value;
+    });
+    return valReturn;
+  }
+
+  static Future<List<QuestionModel>> getAllFrequentQuestions() async {
+    // Finder object can also sort data.
+    final finder = Finder(sortOrders: [
+      SortOrder('question'),
+    ]);
+
+    final recordSnapshots = await _frequentQuestionsStore.find(
+      _db,
+      finder: finder,
+    );
+
+    // Making a List<positionReport> out of List<RecordSnapshot>
+    return recordSnapshots.map((snapshot) {
+      final gridModel = QuestionModel.fromMap(snapshot.value);
+      // An ID is a key of a record from the database.
+      gridModel.id = snapshot.key;
+      return gridModel;
+    }).toList();
+  }
+
+  static Future<List<QuestionModel>> getQuestionsMatches(String valueIn) async {
+    // final finder = Finder(filter: Filter.matches('question',valueIn));
+    // final finder = Finder(filter: Filter.matchesRegExp('question',RegExp(r'*"' + valueIn + '"*', caseSensitive: false)));
+    final finder = Finder(filter: Filter.matchesRegExp('question',RegExp("\w*$valueIn\w*", caseSensitive: false)));
+    
+    final recordSnapshots = await _frequentQuestionsStore.find(
+      _db,
+      finder: finder,
+    );
+
+    // Making a List<positionReport> out of List<RecordSnapshot>
+    return recordSnapshots.map((snapshot) {
+      final gridModel = QuestionModel.fromMap(snapshot.value);
+      // An ID is a key of a record from the database.
+      gridModel.id = snapshot.key;
+      return gridModel;
+    }).toList();
+  }
 
 
 
