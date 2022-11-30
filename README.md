@@ -1,6 +1,6 @@
 # Respira Lima
 
-Aplicación para medir la calidad del aire de los usuarios.
+Aplicación móvil desarrollado en flutter, con la funcionalidad de monitorear la calidad la calidad del aire de los usuarios en su recorrido.
 
 ## Detalles
 
